@@ -99,12 +99,12 @@
 <div id="adminPage" style="display:none">
   <h1>管理员面板</h1>
   <div class="nav" id="adminNav">
+    <button onclick="showAdmin('batch')" data-tab="batch">出入库</button>
+    <button onclick="showAdmin('product')" data-tab="product">产品管理</button>
     <button onclick="showAdmin('emp')" data-tab="emp">员工管理</button>
     <button onclick="showAdmin('register')" data-tab="register">产量登记</button>
     <button onclick="showAdmin('record')" data-tab="record">查询记录</button>
     <button onclick="showAdmin('total')" data-tab="total">工资统计</button>
-    <button onclick="showAdmin('product')" data-tab="product">产品管理</button>
-    <button onclick="showAdmin('batch')" data-tab="batch">出入库</button>
   </div>
   <button class="logout-float" onclick="logout()">退出</button>
 
@@ -424,7 +424,7 @@ function adminLoadRecord(){
           const amount = rec.n * rec.p;
           total += amount;
           hasData = true;
-          html += `<tr><td>${empId}</td><td>${emp.name || '-'}</td><td>${prodName}</td><td>${rec.n}</td><td>${rec.p}</td><td>${amount.toFixed(2)}</td><td>${date}</td></tr>`;
+          html += `<tr><td>${empId}</td><td>${emp.name || '-'}</td><td>${prodName}</td><td>${rec.name || '-'}</td><td>${rec.n}</td><td>${amount.toFixed(2)}</td><td>${date}</td></tr>`;
         });
       });
     });
@@ -663,7 +663,7 @@ function adminRegister(){
   if(!data.records[empId][date]) data.records[empId][date] = {};
   if(!data.records[empId][date][prodKey]) data.records[empId][date][prodKey] = [];
   processes.forEach(p => {
-    data.records[empId][date][prodKey].push({name: p.n, n: p.count, p: p.p});
+    data.records[empId][date][prodKey].push({name: p.n, n: p.count, p: p.p, time: new Date().toLocaleTimeString('zh-CN')});
   });
   saveData();
 
@@ -722,7 +722,7 @@ function empAdd(){
   if(!data.records[currentUser][date]) data.records[currentUser][date] = {};
   if(!data.records[currentUser][date][prod]) data.records[currentUser][date][prod] = [];
   processes.forEach(p => {
-    data.records[currentUser][date][prod].push({name: p.n, n: p.count, p: p.p});
+    data.records[currentUser][date][prod].push({name: p.n, n: p.count, p: p.p, time: new Date().toLocaleTimeString('zh-CN')});
   });
   saveData();
 
@@ -778,7 +778,7 @@ function empShow(){
 
       let recTotal = 0;
       html += `<div style="background:#f0f8ff;padding:10px;border-radius:8px;margin:6px 0">`;
-      html += `<div style="font-weight:bold;color:#333;margin-bottom:6px">${date} · ${prodName}</div>`;
+      html += `<div style="font-weight:bold;color:#333;margin-bottom:6px">${date} ${recs[0]?.time || ''} · ${prodName}</div>`;
       recs.forEach(rec => {
         if(!rec || typeof rec !== 'object') return;
         const amount = rec.n * rec.p;
