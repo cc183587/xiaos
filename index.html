@@ -25,13 +25,13 @@
   input,select{width:100%;font-size:16px;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:6px;background:#fff}
   input[type=number]{-moz-appearance:textfield}
 
-  .item{display:flex;align-items:center;gap:8px;margin:6px 0;background:#fff;padding:8px;border-radius:6px}
+  .item{display:flex;align-items:center;gap:8px;margin:6px 0;background:#fff;padding:10px;border-radius:6px;border:1px solid #E9ECEF}
   .item .name{flex:0 0 110px;font-size:15px}
   .item .price{flex:0 0 80px;font-size:13px;color:#888}
   .item input{flex:1;margin:0}
 
-  .box{background:#fff;padding:12px;margin:8px 0;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
-  .title{font-weight:bold;margin:10px 0;font-size:16px;color:#333}
+  .box{background:#F8F9FA;padding:14px;margin:8px 0;border-radius:8px;border:1px solid #E9ECEF;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .title{font-weight:bold;margin:10px 0;font-size:16px;color:#212529}
   .tag{display:inline-block;padding:2px 10px;background:#e8f4ff;color:#007AFF;border-radius:12px;font-size:13px;margin:2px}
   .row{display:flex;gap:8px;align-items:center;margin:4px 0}
   .row input{margin:0}
@@ -39,11 +39,14 @@
   .nav{display:flex;gap:6px;margin:10px 0;flex-wrap:wrap}
   .nav button{flex:1;padding:10px;font-size:14px;background:#fff;border:1px solid #ddd;border-radius:8px;cursor:pointer;min-width:60px}
   .nav button.active{background:#007AFF;color:#fff;border-color:#007AFF}
+  #adminTitle{position:fixed;top:0;left:0;right:0;background:#f0f2f5;z-index:101;padding:12px 0 2px;text-align:center;font-size:20px;margin:0}
+  #adminNav{position:fixed;top:44px;left:0;right:0;background:#f0f2f5;z-index:100;padding:8px 10px;max-width:640px;margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,.1)}
 
-  table{width:100%;border-collapse:collapse;font-size:14px;margin:6px 0}
-  th{background:#007AFF;color:#fff;padding:8px 6px;text-align:left}
-  td{padding:7px 6px;border-bottom:1px solid #eee}
-  tr:nth-child(even) td{background:#f9f9f9}
+  table{width:100%;border-collapse:collapse;font-size:14px;margin:6px 0;background:#fff;border-radius:8px;overflow:hidden}
+  th{background:#495057;color:#fff;padding:10px 8px;text-align:left}
+  td{padding:9px 8px;border-bottom:1px solid #E9ECEF;color:#495057}
+  tr:nth-child(even) td{background:#F8F9FA}
+  tr:last-child td{border-bottom:none}
 
   .divider{border:none;border-top:1px solid #e0e0e0;margin:12px 0}
   .hint{font-size:13px;color:#999;margin:4px 0}
@@ -64,6 +67,107 @@
 
   .logout-float{position:fixed;top:12px;right:12px;z-index:100;font-size:13px;padding:6px 14px;background:#888;color:#fff;border:none;border-radius:6px;cursor:pointer;display:none}
   .logout-float:hover{background:#666}
+
+  /* Toast 提示样式 */
+  .toast-container{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:10000;display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none}
+  .toast{background:#333;color:#fff;padding:12px 24px;border-radius:8px;font-size:15px;box-shadow:0 4px 12px rgba(0,0,0,.15);opacity:0;transition:opacity .3s,transform .3s;transform:translateY(10px);max-width:90%}
+  .toast.show{opacity:1;transform:translateY(0)}
+  .toast.success{background:#10B981}
+  .toast.error{background:#DC2626}
+  .toast.info{background:#007AFF}
+
+  /* 批次卡片新样式 */
+  .batch-card{background:#F8F9FA;border-radius:8px;padding:16px;margin:10px 0;border:1px solid #E9ECEF;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .batch-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #E9ECEF}
+  .batch-code{color:#212529;font-size:16px;font-weight:600}
+  .batch-status{color:#fff;font-size:13px;font-weight:500;padding:4px 12px;border-radius:12px}
+  .batch-product{color:#6C757D;font-size:15px;margin-bottom:14px}
+  .batch-data{margin-bottom:12px}
+  .batch-row{display:flex;justify-content:space-between;margin-bottom:10px;font-size:15px;color:#495057}
+  .batch-num{color:#212529;font-weight:500}
+  .batch-profit{color:#dc2626;font-weight:700;font-size:18px}
+  .batch-actions{display:flex;justify-content:flex-end;gap:6px}
+
+  /* 薪资明细卡片样式 */
+  .salary-card{background:#F8F9FA;border-radius:8px;padding:16px;margin:10px 0;border:1px solid #E9ECEF;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .card-header{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #E9ECEF;font-size:14px;color:#6C757D}
+  .detail-item{display:flex;align-items:center;margin-bottom:10px;font-size:14px;color:#495057}
+  .check-icon{color:#10B981;margin-right:8px;font-weight:bold}
+  .num{color:#212529;font-weight:500}
+  .total-salary{color:#dc2626;font-size:20px;font-weight:700}
+
+  /* 薪资合计卡片样式 */
+  .salary-total-card{background:#F5F7FF;border-radius:8px;padding:16px;margin-bottom:12px;border:1px solid #E0E7FF;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .card-title{font-size:16px;font-weight:600;color:#2D3748;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #E0E7FF;text-align:center}
+  .amount-container{display:flex;justify-content:space-between;align-items:center}
+  .amount-item{text-align:center;flex:1}
+  .amount-label{font-size:12px;color:#718096;margin-bottom:4px;display:block}
+  .amount-value{font-size:18px;font-weight:700;color:#4F46E5}
+  .amount-unit{font-size:12px;color:#718096}
+
+  /* 产品管理卡片样式 */
+  .process-card{background:#F8F9FA;border-radius:8px;padding:20px;margin:10px 0;border:1px solid #E9ECEF;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+  .product-title{font-size:18px;font-weight:600;color:#212529;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #E9ECEF}
+  .process-list{margin-bottom:20px;font-size:14px}
+  .process-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed #E0E6ED}
+  .process-name{color:#495057}
+  .process-price{color:#4F46E5;font-weight:500}
+  .action-btns{display:flex;gap:12px}
+  .btn-action{flex:1;padding:8px 0;border-radius:6px;font-size:14px;text-align:center;cursor:pointer;border:none}
+  .edit-btn{background-color:#E0E7FF;color:#4F46E5}
+  .delete-btn{background-color:#FEE2E2;color:#DC2626}
+
+  /* 员工管理卡片样式 */
+  .staff-card{background:#F8F9FA;border-radius:8px;padding:20px;margin:10px 0;border:1px solid #E9ECEF;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+  .staff-header{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;color:#212529;padding-bottom:12px;border-bottom:1px solid #E9ECEF;margin-bottom:12px}
+  .header-id{flex:2}.header-name{flex:3;text-align:center}.header-op{flex:2;text-align:center}
+  .staff-item{display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:10px 0;border-bottom:1px dashed #E0E6ED}
+  .staff-id{flex:2;color:#495057}.staff-name{flex:3;color:#495057;text-align:center}.staff-op{flex:2;text-align:center}
+  .del-btn{background-color:#ff3b30;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:13px;cursor:pointer}
+  .empty-value{color:#8A93A1}
+
+  /* 查询记录卡片样式 - 固定表头 */
+  .salary-detail-card{min-width:640px;max-width:900px;background:#F8F9FA;border-radius:8px;padding:20px;margin:10px 0;border:1px solid #E9ECEF;box-shadow:0 2px 8px rgba(0,0,0,.1);overflow-x:auto;position:relative;padding-top:50px}
+  .detail-header{display:flex;align-items:center;font-size:13px;font-weight:600;color:#212529;padding:10px 0;background:#E0E7FF;border-radius:6px;margin-bottom:12px;border:1px solid #C7D2FE}
+  .detail-header > div{text-align:center;padding:0 4px}
+  .header-id{min-width:50px;flex:0 0 50px}
+  .header-name{min-width:60px;flex:0 0 60px}
+  .header-product{min-width:60px;flex:1}
+  .header-process{min-width:60px;flex:1}
+  .header-quantity{min-width:50px;flex:0 0 50px}
+  .header-price{min-width:50px;flex:0 0 50px}
+  .header-amount{min-width:60px;flex:0 0 60px}
+  .header-date{min-width:90px;flex:0 0 90px}
+  .header-op{min-width:90px;flex:0 0 90px}
+  .detail-header{position:absolute;top:15px;left:20px;right:20px;z-index:1}
+  .detail-item{display:flex;align-items:center;font-size:13px;padding:8px 0;border-bottom:1px dashed #E0E6ED}
+  .detail-item > div{text-align:center;padding:0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .detail-id{min-width:50px;flex:0 0 50px;color:#495057}
+  .detail-name{min-width:60px;flex:0 0 60px;color:#8A93A1}
+  .detail-product{min-width:60px;flex:1;color:#495057}
+  .detail-process{min-width:60px;flex:1;color:#8A93A1}
+  .detail-quantity{min-width:50px;flex:0 0 50px;color:#495057}
+  .detail-price{min-width:50px;flex:0 0 50px;color:#495057}
+  .detail-amount{min-width:60px;flex:0 0 60px;color:#4F46E5;font-weight:500}
+  .detail-date{min-width:90px;flex:0 0 90px;color:#6C757D}
+  .detail-op{min-width:100px;flex:0 0 100px;text-align:center;display:flex;gap:4px;justify-content:center}
+  .rec-edit-btn,.rec-del-btn{flex:1;min-width:36px;max-width:42px}
+  .detail-item:last-child{border-bottom:none}
+  .rec-edit-btn{background:#E0E7FF;color:#4F46E5;border:none;border-radius:4px;padding:4px 8px;font-size:11px;cursor:pointer;margin:2px}
+  .rec-del-btn{background:#FEE2E2;color:#DC2626;border:none;border-radius:4px;padding:4px 8px;font-size:11px;cursor:pointer;margin:2px}
+
+  /* 工资统计卡片样式 - 5列等宽布局 + 固定表头 */
+  .wage-stat-card{min-width:500px;max-width:600px;background:#F8F9FA;border-radius:8px;padding:20px;margin:10px 0;border:1px solid #E9ECEF;box-shadow:0 2px 8px rgba(0,0,0,.1);overflow-x:auto;position:relative;padding-top:50px}
+  .wage-header{display:flex;align-items:center;font-size:13px;font-weight:600;color:#212529;padding:10px 0;background:#E0E7FF;border-radius:6px;margin-bottom:12px;border:1px solid #C7D2FE}
+  .wage-id,.wage-name,.wage-today,.wage-month,.wage-total{flex:1;min-width:100px;text-align:center;padding:0 4px;color:#212529}
+  .wage-item{display:flex;align-items:center;font-size:13px;padding:10px 0;border-bottom:1px dashed #E0E6ED}
+  .wage-item:last-child{border-bottom:none}
+  .wage-id{color:#495057}.wage-name{color:#8A93A1}.wage-name.has-name{color:#495057}.wage-today{color:#4F46E5;font-weight:500}.wage-month{color:#4F46E5;font-weight:500}.wage-total{color:#4F46E5;font-weight:500}
+  .wage-footer{display:flex;align-items:center;font-size:13px;font-weight:600;color:#212529;padding:10px 0;border-top:2px solid #E0E7FF;margin-top:8px}
+  .wage-footer > div{flex:1;min-width:100px;text-align:center;padding:0 4px}
+  .wage-footer-id{color:#212529;font-weight:600}.wage-footer-name{color:#212529}
+  .wage-footer-today,.wage-footer-month,.wage-footer-total{color:#DC2626;font-weight:700;font-size:16px}
+  .wage-header{position:absolute;top:15px;left:20px;right:20px;z-index:1}
 </style>
 </head>
 <body>
@@ -95,9 +199,12 @@
   <button class="logout-float" onclick="logout()">退出</button>
 </div>
 
+<!-- Toast 容器 -->
+<div id="toastContainer" class="toast-container"></div>
+
 <!-- ========== 管理员主页 ========== -->
-<div id="adminPage" style="display:none">
-  <h1>管理员面板</h1>
+<div id="adminPage" style="display:none;padding-top:100px">
+  <h1 id="adminTitle">管理员面板</h1>
   <div class="nav" id="adminNav">
     <button onclick="showAdmin('summary')" data-tab="summary">总览</button>
     <button onclick="showAdmin('batch')" data-tab="batch">出入库</button>
@@ -114,10 +221,15 @@
       <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:12px">本月</div>
       <div id="summaryContent"></div>
     </div>
+    <div class="box" style="background:#fff5e6;border-left:4px solid #ff9500">
+      <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:12px">上月</div>
+      <div id="summaryLastContent"></div>
+    </div>
     <div class="box" style="background:#fff8f0;border-left:4px solid #ff9500">
       <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:12px">累计</div>
       <div id="summaryAllContent"></div>
     </div>
+    <button class="btn" onclick="adminExportReport()">导出报表</button>
   </div>
   <button class="logout-float" onclick="logout()">退出</button>
 
@@ -139,16 +251,12 @@
       </select>
       <input type="date" id="recordDate">
       <button class="btn btn-sm-green" onclick="adminLoadRecord()">查询</button>
-      <button class="btn btn-sm" onclick="adminExportRecord()">导出Excel</button>
     </div>
     <div id="adminRecordList"></div>
   </div>
 
   <!-- 工资统计 -->
   <div id="adminTotal" style="display:none">
-    <div class="box">
-      <button class="btn btn-sm" onclick="adminExportTotal()">导出Excel</button>
-    </div>
     <div id="adminTotalList"></div>
   </div>
 
@@ -293,6 +401,24 @@ function loadData(){
   if(!data.regSeq) data.regSeq = 0;
 }
 
+// Toast 提示函数
+function showToast(message, type = 'info', duration = 2500){
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  
+  // 触发动画
+  setTimeout(() => toast.classList.add('show'), 10);
+  
+  // 自动移除
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
 // 保存当前公司的数据
 function saveData(){
   localStorage.setItem('factoryData', JSON.stringify(data));
@@ -403,12 +529,21 @@ function adminAddEmp(){
 }
 
 function adminLoadEmpList(){
-  let html = '<table><tr><th>工号</th><th>姓名</th><th>操作</th></tr>';
-  data.emps.forEach(e => {
-    html += `<tr><td>${e.id}</td><td>${e.name || '-'}</td><td><button class="btn-sm btn-sm-red" onclick="adminDelEmp('${e.id}')">删除</button></td></tr>`;
-  });
-  html += '</table>';
-  document.getElementById('adminEmpList').innerHTML = html || '<p style="color:#999">暂无员工</p>';
+  const html = `<div class="staff-card">
+    <div class="staff-header">
+      <div class="header-id">工号</div>
+      <div class="header-name">姓名</div>
+      <div class="header-op">操作</div>
+    </div>
+    ${data.emps.map(e => `
+      <div class="staff-item">
+        <div class="staff-id">${e.id}</div>
+        <div class="staff-name ${!e.name ? 'empty-value' : ''}">${e.name || '-'}</div>
+        <div class="staff-op"><button class="del-btn" onclick="adminDelEmp('${e.id}')">删除</button></div>
+      </div>
+    `).join('')}
+  </div>`;
+  document.getElementById('adminEmpList').innerHTML = html || '<p style="color:#999;text-align:center;padding:20px">暂无员工</p>';
 }
 
 function adminDelEmp(id){
@@ -430,9 +565,23 @@ function adminLoadRecord(){
   let monthTotal = 0;
   let allTotal = 0;
 
-  let html = '<table><tr><th>工号</th><th>姓名</th><th>产品</th><th>工序</th><th>数量</th><th>单价</th><th>金额</th><th>日期</th></tr>';
+  let html = `<div class="salary-detail-card">
+    <div class="detail-header">
+      <div class="header-id">工号</div>
+      <div class="header-name">姓名</div>
+      <div class="header-product">产品</div>
+      <div class="header-process">工序</div>
+      <div class="header-quantity">数量</div>
+      <div class="header-price">单价</div>
+      <div class="header-amount">金额</div>
+      <div class="header-date">日期</div>
+      <div class="header-op">操作</div>
+    </div>`;
   let total = 0;
   let hasData = false;
+
+  // 先收集所有记录，用于排序
+  const allRecords = [];
 
   Object.keys(data.records).forEach(empId => {
     const emp = data.emps.find(e => e.id === empId);
@@ -445,10 +594,16 @@ function adminLoadRecord(){
       // 日期过滤
       if(dateFilter && date !== dateFilter) return;
 
-      Object.keys(data.records[empId][date]).forEach(prodKey => {
+      const dateData = data.records[empId][date];
+      if(!dateData || typeof dateData !== 'object') return;
+
+      Object.keys(dateData).forEach(prodKey => {
         const prodName = data.products[prodKey]?.name || prodKey;
-        data.records[empId][date][prodKey].forEach(rec => {
-          const amount = rec.n * rec.p;
+        const recs = dateData[prodKey];
+        if(!Array.isArray(recs)) return;
+
+        recs.forEach((rec, recIdx) => {
+          const amount = (rec.n || 0) * (rec.p || 0);
           total += amount;
           allTotal += amount;
           // 本月统计
@@ -460,25 +615,74 @@ function adminLoadRecord(){
             todayTotal += amount;
           }
           hasData = true;
-          html += `<tr><td>${empId}</td><td>${emp.name || '-'}</td><td>${prodName}</td><td>${rec.name || '-'}</td><td>${rec.n}</td><td>${rec.p}</td><td>${amount.toFixed(2)}</td><td>${date}</td></tr>`;
+          const recKey = `${empId}|${date}|${prodKey}|${recIdx}`;
+          // 收集记录数据用于排序
+          allRecords.push({
+            empId: empId,
+            empName: emp.name || '-',
+            prodName: prodName,
+            procName: rec.name || '-',
+            quantity: rec.n,
+            price: rec.p,
+            amount: amount,
+            date: date,
+            time: rec.time || '',
+            recKey: recKey
+          });
         });
       });
     });
   });
 
+  // 按日期降序、时间降序排序（最新的在最上面）
+  allRecords.sort((a, b) => {
+    if(a.date !== b.date) return b.date.localeCompare(a.date);
+    return (b.time || '').localeCompare(a.time || '');
+  });
+
+  // 渲染排序后的记录
+  allRecords.forEach(rec => {
+    html += `<div class="detail-item">
+      <div class="detail-id">${rec.empId}</div>
+      <div class="detail-name">${rec.empName}</div>
+      <div class="detail-product">${rec.prodName}</div>
+      <div class="detail-process">${rec.procName}</div>
+      <div class="detail-quantity">${rec.quantity}</div>
+      <div class="detail-price">${rec.price}</div>
+      <div class="detail-amount">${rec.amount.toFixed(2)}</div>
+      <div class="detail-date">${rec.date}</div>
+      <div class="detail-op">
+        <button class="rec-edit-btn" onclick="editRecord('${rec.recKey}')">修改</button>
+        <button class="rec-del-btn" onclick="delRecord('${rec.recKey}')">删除</button>
+      </div>
+    </div>`;
+  });
+
   // 薪资合计头部
   const totalHtml = `
-    <div style="background:#fff5f0;padding:12px;border-radius:10px;margin-bottom:10px;text-align:center;border:2px solid #ff9500">
-      <div style="font-size:16px;font-weight:bold;color:#d35400;margin-bottom:6px">薪资合计</div>
-      <div style="font-size:15px;color:#e67e22">
-        今日：<b>${todayTotal.toFixed(2)}元</b> &nbsp;|&nbsp; 
-        本月：<b>${monthTotal.toFixed(2)}元</b> &nbsp;|&nbsp; 
-        累计：<b>${allTotal.toFixed(2)}元</b>
+    <div class="salary-total-card">
+      <div class="card-title">薪资合计</div>
+      <div class="amount-container">
+        <div class="amount-item">
+          <span class="amount-label">今日</span>
+          <span class="amount-value">${todayTotal.toFixed(2)}</span>
+          <span class="amount-unit">元</span>
+        </div>
+        <div class="amount-item">
+          <span class="amount-label">本月</span>
+          <span class="amount-value">${monthTotal.toFixed(2)}</span>
+          <span class="amount-unit">元</span>
+        </div>
+        <div class="amount-item">
+          <span class="amount-label">累计</span>
+          <span class="amount-value">${allTotal.toFixed(2)}</span>
+          <span class="amount-unit">元</span>
+        </div>
       </div>
     </div>
   `;
 
-  html += '</table>';
+  html += '</div>';
   if(!hasData) html = '<p style="text-align:center;padding:20px;color:#999">暂无记录</p>';
   else html += `<div class="title">本次查询总计：${total.toFixed(2)} 元</div>`;
   document.getElementById('adminRecordList').innerHTML = totalHtml + html;
@@ -506,6 +710,15 @@ function adminLoadSummary(){
   // 计算本月的年月
   const thisYearMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
   
+  // 计算上月的年月
+  let lastYear = currentYear;
+  let lastMonth = currentMonth - 1;
+  if(lastMonth < 1){
+    lastMonth = 12;
+    lastYear = currentYear - 1;
+  }
+  const lastYearMonth = `${lastYear}-${String(lastMonth).padStart(2, '0')}`;
+  
   // 本月入库数量
   let inQty = 0;
   // 本月出库数量
@@ -514,6 +727,15 @@ function adminLoadSummary(){
   let profit = 0;
   // 本月员工工资合计
   let wageTotal = 0;
+  
+  // 上月入库数量
+  let lastInQty = 0;
+  // 上月出库数量
+  let lastOutQty = 0;
+  // 上月利润
+  let lastProfit = 0;
+  // 上月员工工资合计
+  let lastWageTotal = 0;
   
   // 累计入库数量
   let allInQty = 0;
@@ -548,6 +770,19 @@ function adminLoadSummary(){
         profit += b.profit || 0;
       }
     }
+    
+    // 上月统计 - 入库
+    if(createYearMonth === lastYearMonth && b.status === 'in'){
+      lastInQty += b.qty;
+    }
+    // 上月统计 - 出库
+    if(b.status === 'out'){
+      const outYearMonth = parseYearMonth(b.outDate || b.createTime);
+      if(outYearMonth === lastYearMonth){
+        lastOutQty += b.outQty || b.qty;
+        lastProfit += b.profit || 0;
+      }
+    }
   });
   
   // 遍历记录统计员工工资
@@ -574,6 +809,19 @@ function adminLoadSummary(){
           recs.forEach(rec => {
             if(rec && typeof rec === 'object'){
               wageTotal += (rec.n || 0) * (rec.p || 0);
+            }
+          });
+        });
+      }
+      
+      // 上月统计
+      if(recYearMonth === lastYearMonth){
+        Object.keys(data.records[empId][date]).forEach(prodKey => {
+          const recs = data.records[empId][date][prodKey];
+          if(!Array.isArray(recs)) return;
+          recs.forEach(rec => {
+            if(rec && typeof rec === 'object'){
+              lastWageTotal += (rec.n || 0) * (rec.p || 0);
             }
           });
         });
@@ -611,6 +859,36 @@ function adminLoadSummary(){
   `;
   document.getElementById('summaryContent').innerHTML = html;
   
+  // 渲染上月统计卡片
+  const lastHtml = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="background:#fff;padding:12px;border-radius:8px;text-align:center">
+        <div style="font-size:13px;color:#888">入库数量</div>
+        <div style="font-size:24px;font-weight:bold;color:#34c759">${lastInQty}</div>
+        <div style="font-size:12px;color:#aaa">件</div>
+      </div>
+      <div style="background:#fff;padding:12px;border-radius:8px;text-align:center">
+        <div style="font-size:13px;color:#888">出库数量</div>
+        <div style="font-size:24px;font-weight:bold;color:#ff9500">${lastOutQty}</div>
+        <div style="font-size:12px;color:#aaa">件</div>
+      </div>
+      <div style="background:#fff;padding:12px;border-radius:8px;text-align:center">
+        <div style="font-size:13px;color:#888">预估利润</div>
+        <div style="font-size:24px;font-weight:bold;color:#007AFF">${lastProfit.toFixed(2)}</div>
+        <div style="font-size:12px;color:#aaa">元</div>
+      </div>
+      <div style="background:#fff;padding:12px;border-radius:8px;text-align:center">
+        <div style="font-size:13px;color:#888">员工工资</div>
+        <div style="font-size:24px;font-weight:bold;color:#ff3b30">${lastWageTotal.toFixed(2)}</div>
+        <div style="font-size:12px;color:#aaa">元</div>
+      </div>
+    </div>
+    <div style="margin-top:12px;font-size:13px;color:#666;text-align:center">
+      ${lastYear}年${lastMonth}月数据
+    </div>
+  `;
+  document.getElementById('summaryLastContent').innerHTML = lastHtml;
+  
   // 渲染累计统计卡片
   const allHtml = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -643,35 +921,78 @@ function adminLoadSummary(){
 }
 
 function adminLoadTotal(){
-  let html = '<table><tr><th>工号</th><th>姓名</th><th>总金额</th></tr>';
-  const totals = {};
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const thisMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+  let html = `<div class="wage-stat-card">
+    <div class="wage-header">
+      <div class="wage-id">工号</div>
+      <div class="wage-name">姓名</div>
+      <div class="wage-today">今日</div>
+      <div class="wage-month">本月</div>
+      <div class="wage-total">累计</div>
+    </div>`;
+
+  let grandToday = 0, grandMonth = 0, grandTotal = 0;
+  let hasData = false;
+
   Object.keys(data.records || {}).forEach(empId => {
     const emp = data.emps.find(e => e.id === empId);
     if(!emp) return;
-    let total = 0;
+
+    let todayAmt = 0, monthAmt = 0, allAmt = 0;
+
     Object.keys(data.records[empId]).forEach(date => {
       const dateData = data.records[empId][date];
       if(!dateData || typeof dateData !== 'object') return;
+
       Object.keys(dateData).forEach(prodKey => {
         const recs = dateData[prodKey];
         if(!Array.isArray(recs)) return;
         recs.forEach(rec => {
           if(!rec || typeof rec !== 'object') return;
-          total += (rec.n || 0) * (rec.p || 0);
+          const amt = (rec.n || 0) * (rec.p || 0);
+          allAmt += amt;
+          grandTotal += amt;
+          if(date.startsWith(thisMonthStr)){
+            monthAmt += amt;
+            grandMonth += amt;
+          }
+          if(date === todayStr){
+            todayAmt += amt;
+            grandToday += amt;
+          }
         });
       });
     });
-    if(total > 0){
-      totals[empId] = total;
-      html += `<tr><td>${empId}</td><td>${emp.name || '-'}</td><td>${total.toFixed(2)}</td></tr>`;
+
+    if(allAmt > 0){
+      hasData = true;
+      const nameClass = emp.name ? 'wage-name has-name' : 'wage-name';
+      html += `<div class="wage-item">
+        <div class="wage-id">${empId}</div>
+        <div class="${nameClass}">${emp.name || '-'}</div>
+        <div class="wage-today">${todayAmt.toFixed(2)}</div>
+        <div class="wage-month">${monthAmt.toFixed(2)}</div>
+        <div class="wage-total">${allAmt.toFixed(2)}</div>
+      </div>`;
     }
   });
-  html += '</table>';
-  if(Object.keys(totals).length === 0) html = '<p style="text-align:center;padding:20px;color:#999">暂无数据</p>';
-  else {
-    const grandTotal = Object.values(totals).reduce((sum, val) => sum + val, 0);
-    html += `<div class="title">总计：${grandTotal.toFixed(2)} 元</div>`;
+
+  // 合计行
+  if(hasData){
+    html += `<div class="wage-footer">
+      <div class="wage-footer-id">合计</div>
+      <div class="wage-footer-name"></div>
+      <div class="wage-footer-today">${grandToday.toFixed(2)}</div>
+      <div class="wage-footer-month">${grandMonth.toFixed(2)}</div>
+      <div class="wage-footer-total">${grandTotal.toFixed(2)}</div>
+    </div>`;
   }
+
+  html += '</div>';
+  if(!hasData) html = '<p style="text-align:center;padding:20px;color:#999">暂无数据</p>';
   document.getElementById('adminTotalList').innerHTML = html;
 }
 
@@ -687,21 +1008,30 @@ function adminAddProduct(){
 
 function adminLoadProductList(){
   const html = Object.keys(data.products).map(k =>
-    `<div class="box">
-      <div class="title">${data.products[k].name}</div>
-      <div id="prodProcesses_${k}">${data.products[k].processes.map(p => `<span class="tag">${p.n} ${p.p}元</span>`).join('') || '<span style="color:#999">暂无工序</span>'}</div>
-      <div id="prodEdit_${k}" style="display:none;margin-top:10px">
-        <input type="text" id="procName_${k}" placeholder="工序名称" style="flex:1;margin-right:8px">
-        <input type="number" step="0.01" id="procPrice_${k}" placeholder="单价" style="flex:1;margin-right:8px">
-        <button class="btn-sm" onclick="addProcess('${k}')">添加工序</button>
+    `<div class="process-card">
+      <div class="product-title">${data.products[k].name}</div>
+      <div class="process-list">
+        ${data.products[k].processes.map(p => `
+          <div class="process-item">
+            <span class="process-name">${p.n}</span>
+            <span class="process-price">${p.p} 元</span>
+          </div>
+        `).join('') || '<span style="color:#999">暂无工序</span>'}
       </div>
-      <div style="margin-top:8px">
-        <button class="btn-sm" onclick="toggleEditProcess('${k}')">编辑工序</button>
-        <button class="btn-sm btn-sm-red" onclick="adminDelProduct('${k}')">删除产品</button>
+      <div id="prodEdit_${k}" style="display:none;margin-bottom:16px">
+        <div class="row" style="margin-bottom:8px">
+          <input type="text" id="procName_${k}" placeholder="工序名称" style="flex:1;margin-right:8px">
+          <input type="number" step="0.01" id="procPrice_${k}" placeholder="单价" style="width:100px">
+        </div>
+        <button class="btn" style="margin:0" onclick="addProcess('${k}')">确认添加</button>
+      </div>
+      <div class="action-btns">
+        <button class="btn-action edit-btn" onclick="toggleEditProcess('${k}')">编辑工序</button>
+        <button class="btn-action delete-btn" onclick="adminDelProduct('${k}')">删除产品</button>
       </div>
     </div>`
   ).join('');
-  document.getElementById('adminProductList').innerHTML = html || '<p style="color:#999">暂无产品</p>';
+  document.getElementById('adminProductList').innerHTML = html || '<p style="color:#999;text-align:center;padding:20px">暂无产品</p>';
 }
 
 function toggleEditProcess(prodKey){
@@ -779,13 +1109,29 @@ function adminLoadBatchList(){
   const sorted = [...data.batches].reverse();
   const html = sorted.map(b => {
     const statusText = b.status === 'in' ? '入库中' : '已出库';
-    const btn = b.status === 'in' ? `<button class="btn-sm btn-sm-orange" onclick="outBatch('${b.id}')">出库</button>` : '';
-    return `<div class="box">
-      <div class="title">${b.batchCode || ''} ${b.prodName}${b.color ? ' · '+b.color : ''}</div>
-      <div>状态：${statusText}</div>
-      <div>数量：${b.qty} 件 | 单价：${b.price} 元/件</div>
-      <div>员工工资：${b.wageTotal.toFixed(2)} 元 | 预估利润：${(b.totalCost - b.wageTotal).toFixed(2)} 元</div>
-      <button class="btn-sm btn-sm-red" onclick="delBatch('${b.id}')">删除</button>${btn}
+    const statusClass = b.status === 'in' ? '#f59e0b' : '#10B981';
+    const btn = b.status === 'in' ? `<button class="btn-sm btn-sm-orange" onclick="outBatch('${b.id}')" style="margin-right:6px">出库</button>` : '';
+    const outDateRow = b.outDate ? `<div class="batch-row"><span>出库日期：<span class="batch-num">${b.outDate}</span></span></div>` : '';
+    return `<div class="batch-card">
+      <div class="batch-header">
+        <div class="batch-code">${b.batchCode || ''}</div>
+        <div class="batch-status" style="background-color:${statusClass}">${statusText}</div>
+      </div>
+      <div class="batch-product">${b.prodName}${b.color ? ' · '+b.color : ''}</div>
+      <div class="batch-data">
+        <div class="batch-row">
+          <span>数量：<span class="batch-num">${b.qty}</span> 件</span>
+          <span>单价：<span class="batch-num">${b.price}</span> 元/件</span>
+        </div>
+        <div class="batch-row">
+          <span>员工工资：<span class="batch-num">${b.wageTotal.toFixed(2)}</span> 元</span>
+          <span>预估利润：<span class="batch-profit">${(b.totalCost - b.wageTotal).toFixed(2)}</span> 元</span>
+        </div>
+        ${outDateRow}
+      </div>
+      <div class="batch-actions">
+        ${btn}<button class="btn-sm btn-sm-red" onclick="delBatch('${b.id}')">删除</button>
+      </div>
     </div>`;
   }).join('');
   document.getElementById('batchList').innerHTML = html || '<p style="color:#999">暂无批次</p>';
@@ -900,15 +1246,15 @@ function adminRegister(){
   // 显示结果
   const emp = data.emps.find(e => e.id === empId);
   const empName = emp ? (emp.name || empId) : empId;
-  let html = `<div style="background:#f0f8ff;padding:10px;border-radius:8px;margin:10px 0">`;
-  html += `<div style="font-weight:bold;color:#333;margin-bottom:8px">${date} ${timeStr} · ${data.products[prodKey].name}</div>`;
+  let html = `<div class="salary-card">`;
+  html += `<div class="card-header">${date} ${timeStr} · ${data.products[prodKey].name}</div>`;
   let total = 0;
   processes.forEach(p => {
     const amt = p.count * p.p;
     total += amt;
-    html += `<div style="padding:4px 0">✓ ${p.n}：${p.count}个 × ${p.p}元/个 = ${amt.toFixed(2)}元</div>`;
+    html += `<div class="detail-item"><span class="check-icon">✓</span><div>${p.n}：<span class="num">${p.count}</span> 个 × <span class="num">${p.p}</span>元/个 = <span class="num">${amt.toFixed(2)}</span>元</div></div>`;
   });
-  html += `<div style="font-weight:bold;margin-top:8px;color:#007AFF">本次薪资：${total.toFixed(2)}元</div>`;
+  html += `<div class="detail-item">本次薪资：<span class="total-salary">${total.toFixed(2)}</span>元</div>`;
   html += '</div>';
 
   const resultDiv = document.getElementById('regResult');
@@ -936,7 +1282,7 @@ document.getElementById('prod').addEventListener('change', function(){
 
 function empAdd(){
   const prod = document.getElementById('prod').value;
-  if(!prod){ alert('请选择产品'); return; }
+  if(!prod){ showToast('请选择产品', 'error'); return; }
   const items = document.querySelectorAll('#processList input');
   const processes = [];
   items.forEach(input => {
@@ -945,7 +1291,7 @@ function empAdd(){
       processes.push({n: input.dataset.n, p: parseFloat(input.dataset.p), count: n});
     }
   });
-  if(processes.length === 0){ alert('请填写至少一个工序的数量'); return; }
+  if(processes.length === 0){ showToast('请填写至少一个工序的数量', 'error'); return; }
 
   const date = new Date().toISOString().split('T')[0];
   if(!data.records[currentUser]) data.records[currentUser] = {};
@@ -978,12 +1324,12 @@ function empAdd(){
   processes.forEach(p => {
     const amt = p.count * p.p;
     recTotal += amt;
-    html += `<div style="padding:4px 0">✓ ${p.n}：${p.count}个 × ${p.p}元/个 = ${amt.toFixed(2)}元</div>`;
+    html += `<div class="detail-item"><span class="check-icon">✓</span><div>${p.n}：<span class="num">${p.count}</span> 个 × <span class="num">${p.p}</span>元/个 = <span class="num">${amt.toFixed(2)}</span>元</div></div>`;
   });
-  const cardHtml = `<div style="background:#f0f8ff;padding:10px;border-radius:8px;margin:10px 0">
-    <div style="font-weight:bold;margin-bottom:8px">${date} ${timeStr} · ${data.products[prod].name}</div>
+  const cardHtml = `<div class="salary-card">
+    <div class="card-header">${date} ${timeStr} · ${data.products[prod].name}</div>
     ${html}
-    <div style="font-weight:bold;margin-top:8px;color:#007AFF">本次薪资：${recTotal.toFixed(2)}元</div>
+    <div class="detail-item">本次薪资：<span class="total-salary">${recTotal.toFixed(2)}</span>元</div>
   </div>`;
 
   const resultDiv = document.getElementById('empResult');
@@ -994,6 +1340,9 @@ function empAdd(){
   }
 
   items.forEach(input => input.value = '');
+  
+  // 显示成功提示
+  showToast('登记成功！', 'success');
   
   // 自动加载薪资查询
   empShow();
@@ -1062,14 +1411,24 @@ function empShow(){
 
   // 薪资合计头部
   const totalHtml = `
-    <div style="background:#fff5f0;padding:14px;border-radius:10px;margin-bottom:10px;text-align:center;border:2px solid #ff9500">
-      <div style="font-size:18px;font-weight:bold;color:#d35400;margin-bottom:8px">薪资合计</div>
-      <div style="font-size:16px;color:#e67e22">
-        <span style="margin:0 8px">今日：<b>${todayTotal.toFixed(2)}元</b></span>
-        <span style="margin:0 8px">|</span>
-        <span style="margin:0 8px">本月：<b>${monthTotal.toFixed(2)}元</b></span>
-        <span style="margin:0 8px">|</span>
-        <span style="margin:0 8px">累计：<b>${allTotal.toFixed(2)}元</b></span>
+    <div class="salary-total-card">
+      <div class="card-title">薪资合计</div>
+      <div class="amount-container">
+        <div class="amount-item">
+          <span class="amount-label">今日</span>
+          <span class="amount-value">${todayTotal.toFixed(2)}</span>
+          <span class="amount-unit">元</span>
+        </div>
+        <div class="amount-item">
+          <span class="amount-label">本月</span>
+          <span class="amount-value">${monthTotal.toFixed(2)}</span>
+          <span class="amount-unit">元</span>
+        </div>
+        <div class="amount-item">
+          <span class="amount-label">累计</span>
+          <span class="amount-value">${allTotal.toFixed(2)}</span>
+          <span class="amount-unit">元</span>
+        </div>
       </div>
     </div>
   `;
@@ -1083,14 +1442,14 @@ function empShow(){
   sortedKeys.forEach(regId => {
     const g = regGroups[regId];
     let recTotal = 0;
-    let cardHtml = `<div style="background:#f0f8ff;padding:10px;border-radius:8px;margin:6px 0">
-      <div style="font-weight:bold;margin-bottom:8px">${g.date} ${g.time} · ${g.prodName}</div>`;
+    let cardHtml = `<div class="salary-card">
+      <div class="card-header">${g.date} ${g.time} · ${g.prodName}</div>`;
     g.recs.forEach(rec => {
       const amount = rec.n * rec.p;
       recTotal += amount;
-      cardHtml += `<div style="padding:3px 0;font-size:14px;color:#555">✓ ${rec.name || '工序'}：${rec.n}个 × ${rec.p}元/个 = ${amount.toFixed(2)}元</div>`;
+      cardHtml += `<div class="detail-item"><span class="check-icon">✓</span><div>${rec.name || '工序'}：<span class="num">${rec.n}</span> 个 × <span class="num">${rec.p}</span>元/个 = <span class="num">${amount.toFixed(2)}</span>元</div></div>`;
     });
-    cardHtml += `<div style="font-weight:bold;margin-top:8px;color:#007AFF">本次薪资：${recTotal.toFixed(2)}元</div></div>`;
+    cardHtml += `<div class="detail-item">本次薪资：<span class="total-salary">${recTotal.toFixed(2)}</span>元</div></div>`;
     html += cardHtml;
   });
 
@@ -1098,6 +1457,158 @@ function empShow(){
 }
 
 // Excel导出函数
+function adminExportReport(){
+  const now = new Date();
+  const thisYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+  // ========== 工作表1：统计总览 ==========
+  let inQty = 0, outQty = 0, profit = 0, wageTotal = 0;
+  let allInQty = 0, allOutQty = 0, allProfit = 0, allWageTotal = 0;
+
+  data.batches.forEach(b => {
+    allInQty += b.qty;
+    if(b.status === 'out'){
+      allOutQty += b.outQty || b.qty;
+      allProfit += b.profit || 0;
+    }
+    const createYM = parseYearMonth(b.createTime);
+    if(createYM === thisYearMonth && b.status === 'in') inQty += b.qty;
+    if(b.status === 'out'){
+      const outYM = parseYearMonth(b.outDate || b.createTime);
+      if(outYM === thisYearMonth){
+        outQty += b.outQty || b.qty;
+        profit += b.profit || 0;
+      }
+    }
+  });
+
+  Object.keys(data.records || {}).forEach(empId => {
+    Object.keys(data.records[empId]).forEach(date => {
+      const recYM = date.substring(0, 7);
+      Object.keys(data.records[empId][date]).forEach(prodKey => {
+        const recs = data.records[empId][date][prodKey];
+        if(!Array.isArray(recs)) return;
+        recs.forEach(rec => {
+          if(rec && typeof rec === 'object'){
+            const amt = (rec.n || 0) * (rec.p || 0);
+            allWageTotal += amt;
+            if(recYM === thisYearMonth) wageTotal += amt;
+          }
+        });
+      });
+    });
+  });
+
+  const overviewRows = [
+    ['统计总览'],
+    [''],
+    ['项目', '本月', '累计'],
+    ['入库数量', inQty, allInQty],
+    ['出库数量', outQty, allOutQty],
+    ['预估利润', profit.toFixed(2), allProfit.toFixed(2)],
+    ['员工工资', wageTotal.toFixed(2), allWageTotal.toFixed(2)],
+    ['统计时间', now.toLocaleString('zh-CN'), '']
+  ];
+
+  // ========== 工作表2：批次信息 ==========
+  const batchRows = [['批次号','产品','颜色','数量','单价','总成本','员工工资','状态','创建时间','出库时间','预估利润']];
+  data.batches.forEach(b => {
+    batchRows.push([
+      b.batchCode || '', b.prodName || '', b.color || '', b.qty, b.price,
+      b.totalCost.toFixed(2), b.wageTotal.toFixed(2),
+      b.status === 'in' ? '入库中' : '已出库',
+      b.createTime || '', b.outDate || '', (b.profit || 0).toFixed(2)
+    ]);
+  });
+
+  // ========== 工作表3：产量记录 ==========
+  const recordRows = [['工号','姓名','产品','工序','数量','单价','金额','日期','时间','批次号']];
+  Object.keys(data.records).forEach(empId => {
+    const emp = data.emps.find(e => e.id === empId);
+    if(!emp) return;
+    Object.keys(data.records[empId]).forEach(date => {
+      const dateData = data.records[empId][date];
+      if(!dateData || typeof dateData !== 'object') return;
+      Object.keys(dateData).forEach(prodKey => {
+        const prodName = data.products[prodKey]?.name || prodKey;
+        const recs = dateData[prodKey];
+        if(!Array.isArray(recs)) return;
+        recs.forEach(rec => {
+          const amount = (rec.n || 0) * (rec.p || 0);
+          recordRows.push([empId, emp.name||'', prodName, rec.name||'', rec.n, rec.p, amount.toFixed(2), date, rec.time||'', rec.batchCode||'']);
+        });
+      });
+    });
+  });
+
+  // ========== 工作表4：工资统计 ==========
+  const totalRows = [['工号','姓名','总金额']];
+  const empTotals = {};
+  Object.keys(data.records).forEach(empId => {
+    const emp = data.emps.find(e => e.id === empId);
+    if(!emp) return;
+    let total = 0;
+    Object.keys(data.records[empId]).forEach(date => {
+      const dateData = data.records[empId][date];
+      if(!dateData || typeof dateData !== 'object') return;
+      Object.keys(dateData).forEach(prodKey => {
+        const recs = dateData[prodKey];
+        if(!Array.isArray(recs)) return;
+        recs.forEach(rec => {
+          total += (rec.n || 0) * (rec.p || 0);
+        });
+      });
+    });
+    if(total > 0){
+      empTotals[empId] = total;
+      totalRows.push([empId, emp.name||'', total.toFixed(2)]);
+    }
+  });
+  const grandTotal = Object.values(empTotals).reduce((sum, val) => sum + val, 0);
+  totalRows.push(['', '总计', grandTotal.toFixed(2)]);
+
+  // ========== 工作表5：员工列表 ==========
+  const empRows = [['工号','姓名']];
+  data.emps.forEach(e => { empRows.push([e.id, e.name || '']); });
+
+  // ========== 工作表6：产品列表 ==========
+  const prodRows = [['产品名称','工序']];
+  Object.keys(data.products).forEach(k => {
+    const procs = data.products[k].processes.map(p => `${p.n}:${p.p}元`).join('; ');
+    prodRows.push([data.products[k].name, procs]);
+  });
+
+  // 创建工作簿
+  const wb = XLSX.utils.book_new();
+
+  const ws1 = XLSX.utils.aoa_to_sheet(overviewRows);
+  ws1['!cols'] = [{wch:12},{wch:15},{wch:15}];
+  XLSX.utils.book_append_sheet(wb, ws1, '统计总览');
+
+  const ws2 = XLSX.utils.aoa_to_sheet(batchRows);
+  ws2['!cols'] = [{wch:14},{wch:10},{wch:8},{wch:8},{wch:8},{wch:10},{wch:10},{wch:8},{wch:18},{wch:18},{wch:10}];
+  XLSX.utils.book_append_sheet(wb, ws2, '批次信息');
+
+  const ws3 = XLSX.utils.aoa_to_sheet(recordRows);
+  ws3['!cols'] = [{wch:8},{wch:10},{wch:10},{wch:12},{wch:8},{wch:8},{wch:10},{wch:12},{wch:10},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, ws3, '产量记录');
+
+  const ws4 = XLSX.utils.aoa_to_sheet(totalRows);
+  ws4['!cols'] = [{wch:10},{wch:10},{wch:12}];
+  XLSX.utils.book_append_sheet(wb, ws4, '工资统计');
+
+  const ws5 = XLSX.utils.aoa_to_sheet(empRows);
+  ws5['!cols'] = [{wch:10},{wch:10}];
+  XLSX.utils.book_append_sheet(wb, ws5, '员工列表');
+
+  const ws6 = XLSX.utils.aoa_to_sheet(prodRows);
+  ws6['!cols'] = [{wch:12},{wch:40}];
+  XLSX.utils.book_append_sheet(wb, ws6, '产品列表');
+
+  const fileName = `工厂报表_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.xlsx`;
+  XLSX.writeFile(wb, fileName);
+}
+
 function adminExportRecord(){
   const empFilter = document.getElementById('recordEmpId').value;
   const dateFilter = document.getElementById('recordDate').value;
@@ -1150,6 +1661,87 @@ function adminExportTotal(){
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, '工资统计');
   XLSX.writeFile(wb, `工资统计.xlsx`);
+}
+
+// ========== 删除记录 ==========
+function delRecord(recKey){
+  const parts = recKey.split('|');
+  if(parts.length !== 4) return;
+  const [empId, date, prodKey, recIdx] = parts;
+  const idx = parseInt(recIdx);
+  showModal({
+    title: '确认删除',
+    msg: '确定删除这条登记记录吗？',
+    confirmText: '删除',
+    danger: true
+  }).then(confirmed => {
+    if(!confirmed) return;
+    if(!data.records[empId] || !data.records[empId][date] || !data.records[empId][date][prodKey]) return;
+    const recs = data.records[empId][date][prodKey];
+    if(!Array.isArray(recs) || idx < 0 || idx >= recs.length) return;
+    // 更新批次工资
+    const rec = recs[idx];
+    const batch = data.batches.find(b => b.batchCode === rec.batchCode);
+    if(batch){
+      batch.wageTotal -= (rec.n || 0) * (rec.p || 0);
+      if(batch.wageTotal < 0) batch.wageTotal = 0;
+    }
+    recs.splice(idx, 1);
+    // 清理空数组
+    if(recs.length === 0){
+      delete data.records[empId][date][prodKey];
+      if(Object.keys(data.records[empId][date]).length === 0){
+        delete data.records[empId][date];
+        if(Object.keys(data.records[empId]).length === 0){
+          delete data.records[empId];
+        }
+      }
+    }
+    saveData();
+    adminLoadRecord();
+    showModal({title:'提示', msg:'删除成功！', confirmText:'好的'});
+  });
+}
+
+// ========== 修改记录 ==========
+let _editRecordData = null;
+
+function editRecord(recKey){
+  const parts = recKey.split('|');
+  if(parts.length !== 4) return;
+  const [empId, date, prodKey, recIdx] = parts;
+  const idx = parseInt(recIdx);
+  if(!data.records[empId] || !data.records[empId][date] || !data.records[empId][date][prodKey]) return;
+  const recs = data.records[empId][date][prodKey];
+  if(!Array.isArray(recs) || idx < 0 || idx >= recs.length) return;
+  const rec = recs[idx];
+  _editRecordData = {empId, date, prodKey, idx};
+  showModal({
+    title: '修改记录',
+    msg: `工序：${rec.name || '-'}<br>数量：<input type="number" id="editRecQty" value="${rec.n}" style="width:100%;padding:8px;margin-top:8px;border:1px solid #ccc;border-radius:6px">`,
+    hasInput: false,
+    confirmText: '保存'
+  }).then(confirmed => {
+    if(!confirmed) return;
+    const newQty = parseInt(document.getElementById('editRecQty').value);
+    if(isNaN(newQty) || newQty < 0){
+      showModal({title:'提示', msg:'请输入有效的数量！', confirmText:'好的'});
+      return;
+    }
+    // 更新批次工资
+    const oldAmt = (rec.n || 0) * (rec.p || 0);
+    const newAmt = newQty * (rec.p || 0);
+    const diff = newAmt - oldAmt;
+    const batch = data.batches.find(b => b.batchCode === rec.batchCode);
+    if(batch){
+      batch.wageTotal += diff;
+      if(batch.wageTotal < 0) batch.wageTotal = 0;
+    }
+    rec.n = newQty;
+    saveData();
+    adminLoadRecord();
+    showModal({title:'提示', msg:'修改成功！', confirmText:'好的'});
+  });
 }
 </script>
 </body>
