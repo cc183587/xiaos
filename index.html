@@ -403,7 +403,7 @@ function adminLoadRecord(){
   const empFilter = document.getElementById('recordEmpId').value;
   const dateFilter = document.getElementById('recordDate').value;
 
-  let html = '<table><tr><th>工号</th><th>姓名</th><th>产品</th><th>工序</th><th>数量</th><th>金额</th><th>日期</th></tr>';
+  let html = '<table><tr><th>工号</th><th>姓名</th><th>产品</th><th>工序</th><th>数量</th><th>单价</th><th>金额</th><th>日期</th></tr>';
   let total = 0;
   let hasData = false;
 
@@ -424,7 +424,7 @@ function adminLoadRecord(){
           const amount = rec.n * rec.p;
           total += amount;
           hasData = true;
-          html += `<tr><td>${empId}</td><td>${emp.name || '-'}</td><td>${prodName}</td><td>${rec.name || '-'}</td><td>${rec.n}</td><td>${amount.toFixed(2)}</td><td>${date}</td></tr>`;
+          html += `<tr><td>${empId}</td><td>${emp.name || '-'}</td><td>${prodName}</td><td>${rec.name || '-'}</td><td>${rec.n}</td><td>${rec.p}</td><td>${amount.toFixed(2)}</td><td>${date}</td></tr>`;
         });
       });
     });
@@ -825,13 +825,13 @@ function adminExportRecord(){
         data.records[empId][date][prodKey].forEach(rec => {
           const amount = rec.n * rec.p;
           total += amount;
-          rows.push([empId, emp.name||'', prodName, rec.n, rec.p, amount.toFixed(2), date]);
+          rows.push([empId, emp.name||'', prodName, rec.name||'', rec.n, rec.p, amount.toFixed(2), date]);
         });
       });
     });
   });
   const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = [{wch:10},{wch:10},{wch:12},{wch:10},{wch:10},{wch:10},{wch:12}];
+  ws['!cols'] = [{wch:10},{wch:10},{wch:12},{wch:12},{wch:8},{wch:8},{wch:10},{wch:12}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, '产量记录');
   XLSX.writeFile(wb, `产量记录.xlsx`);
