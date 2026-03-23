@@ -260,7 +260,9 @@ function loadData(){
       emps: [{id:"001",name:""},{id:"002",name:""},{id:"003",name:""}],
       records: {},
       products: DEFAULT_PRODUCTS,
-      batches: []
+      batches: [],
+      batchSeq: {},
+      batchSeq: {}
     };
     localStorage.setItem('factoryData', JSON.stringify(data));
   }
@@ -273,6 +275,8 @@ function loadData(){
   if(!data.products) data.products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
   // 兼容旧数据：如果没有batches字段
   if(!data.batches) data.batches = [];
+  // 兼容旧数据：如果没有batchSeq字段
+  if(!data.batchSeq) data.batchSeq = {};
 }
 
 // 保存当前公司的数据
@@ -535,9 +539,15 @@ function addBatch(){
   const qty = parseInt(document.getElementById('batchQty').value);
   const price = parseFloat(document.getElementById('batchPrice').value);
   if(!prod || !qty || !price){ alert('请填写完整'); return; }
+  const today = new Date();
+  const ym = today.getFullYear().toString() + String(today.getMonth() + 1).padStart(2, '0');
+  data.batchSeq[ym] = (data.batchSeq[ym] || 0) + 1;
+  const seq = String(data.batchSeq[ym]).padStart(2, '0');
+  const batchCode = ym + '-' + seq;
   const batchId = Date.now().toString();
   data.batches.push({
     id: batchId,
+    batchCode: batchCode,
     prodKey: prod,
     prodName: data.products[prod].name,
     color: color || null,
@@ -561,7 +571,7 @@ function adminLoadBatchList(){
     const statusText = b.status === 'in' ? '入库中' : '已出库';
     const btn = b.status === 'in' ? `<button class="btn-sm btn-sm-orange" onclick="outBatch('${b.id}')">出库</button>` : '';
     return `<div class="box">
-      <div class="title">${b.prodName}${b.color ? ' · '+b.color : ''}</div>
+      <div class="title">${b.batchCode || ''} ${b.prodName}${b.color ? ' · '+b.color : ''}</div>
       <div>状态：${statusText} | 数量：${b.qty} 件 | 单价：${b.price} 元/件 | 总价：${b.totalCost.toFixed(2)} 元</div>
       <div>员工工资：${b.wageTotal.toFixed(2)} 元 | 利润：${b.status === 'out' ? b.profit.toFixed(2) : '-'} 元</div>
       <div class="hint">${b.createTime || ''}</div>
