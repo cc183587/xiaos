@@ -574,9 +574,9 @@ function adminLoadBatchList(){
     const btn = b.status === 'in' ? `<button class="btn-sm btn-sm-orange" onclick="outBatch('${b.id}')">出库</button>` : '';
     return `<div class="box">
       <div class="title">${b.batchCode || ''} ${b.prodName}${b.color ? ' · '+b.color : ''}</div>
-      <div>状态：${statusText} | 数量：${b.qty} 件 | 单价：${b.price} 元/件 | 总价：${b.totalCost.toFixed(2)} 元</div>
-      <div>员工工资：${b.wageTotal.toFixed(2)} 元 | 利润：${b.status === 'out' ? b.profit.toFixed(2) : '-'} 元</div>
-      <div class="hint">${b.createTime || ''}</div>
+      <div>状态：${statusText}</div>
+      <div>数量：${b.qty} 件 | 单价：${b.price} 元/件 | 总价：${b.totalCost.toFixed(2)} 元</div>
+      <div>员工工资：${b.wageTotal.toFixed(2)} 元 | 预估利润：${(b.totalCost - b.wageTotal).toFixed(2)} 元</div>
       <button class="btn-sm btn-sm-red" onclick="delBatch('${b.id}')">删除</button>${btn}
     </div>`;
   }).join('');
