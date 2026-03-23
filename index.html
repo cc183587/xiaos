@@ -762,11 +762,8 @@ function empAdd(){
   saveData();
 
   // 显示刚登记的数据
-  const now = new Date();
-  const dateStr = now.toISOString().split('T')[0];
-  const timeStr = now.toTimeString().split(' ')[0];
   let html = '<div style="background:#f0f8ff;padding:10px;border-radius:8px;margin:10px 0">';
-  html += `<div style="font-weight:bold;margin-bottom:8px">${dateStr} ${timeStr} · ${data.products[prod].name}</div>`;
+  html += `<div style="font-weight:bold;margin-bottom:8px">${date} ${timeStr} · ${data.products[prod].name}</div>`;
   processes.forEach(p => {
     html += `<div style="padding:4px 0">✓ ${p.n}：${p.count}个 × ${p.p}元/个 = ${(p.count * p.p).toFixed(2)}元</div>`;
   });
