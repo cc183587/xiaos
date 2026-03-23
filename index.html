@@ -230,6 +230,17 @@
       <div id="summaryAllContent"></div>
     </div>
     <button class="btn" onclick="adminExportReport()">导出报表</button>
+    <div class="box" style="margin-top:16px;background:#fff">
+      <div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:12px">数据备份 / 恢复</div>
+      <div style="display:flex;gap:10px">
+        <button class="btn" style="flex:1;background:#10B981" onclick="backupData()">备份数据</button>
+        <label class="btn" style="flex:1;background:#007AFF;cursor:pointer;text-align:center;line-height:42px">
+          恢复数据
+          <input type="file" id="restoreFile" accept=".json" style="display:none" onchange="restoreData(this)">
+        </label>
+      </div>
+      <div style="font-size:12px;color:#999;margin-top:8px">备份将下载完整数据文件，恢复将覆盖当前数据</div>
+    </div>
   </div>
   <button class="logout-float" onclick="logout()">退出</button>
 
@@ -700,6 +711,44 @@ function parseYearMonth(dateStr){
     return `${y}-${m}`;
   }
   return '';
+}
+
+// 数据备份函数
+function backupData(){
+  const backupData = JSON.parse(localStorage.getItem('factoryData') || '{}');
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const filename = `工厂数据备份_${timestamp}.json`;
+  const blob = new Blob([JSON.stringify(backupData, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('数据备份成功！', 'success');
+}
+
+// 数据恢复函数
+function restoreData(input){
+  const file = input.files[0];
+  if(!file) return;
+  
+  if(!confirm('恢复数据将覆盖当前所有数据，确定要继续吗？')){
+    input.value = '';
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      const importedData = JSON.parse(e.target.result);
+      localStorage.setItem('factoryData', JSON.stringify(importedData));
+      location.reload();
+    } catch(err){
+      showToast('数据格式错误，恢复失败！', 'error');
+    }
+  };
+  reader.readAsText(file);
 }
 
 function adminLoadSummary(){
