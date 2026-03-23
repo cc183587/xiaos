@@ -667,11 +667,24 @@ function adminRegister(){
   const now = new Date();
   const date = now.toISOString().split('T')[0];
   const timeStr = now.toTimeString().split(' ')[0];
+  // 找到该产品未出库的批次（FIFO），自动关联
+  const batch = [...data.batches]
+    .filter(b => b.prodKey === prodKey && b.status === 'in')
+    .sort((a, b) => a.createTime.localeCompare(b.createTime))[0];
+
+  if(!batch){
+    showModal({title:'提示', msg:'请联系老板创建入库信息，谢谢！'});
+    return;
+  }
+
   if(!data.records[empId]) data.records[empId] = {};
   if(!data.records[empId][date]) data.records[empId][date] = {};
   if(!data.records[empId][date][prodKey]) data.records[empId][date][prodKey] = [];
   processes.forEach(p => {
-    data.records[empId][date][prodKey].push({name: p.n, n: p.count, p: p.p, time: timeStr});
+    const record = {name: p.n, n: p.count, p: p.p, time: timeStr};
+    record.batchCode = batch.batchCode;
+    data.records[empId][date][prodKey].push(record);
+    batch.wageTotal += p.count * p.p;
   });
   saveData();
 
@@ -734,11 +747,17 @@ function empAdd(){
     .filter(b => b.prodKey === prod && b.status === 'in')
     .sort((a, b) => a.createTime.localeCompare(b.createTime))[0];
 
+  if(!batch){
+    showModal({title:'提示', msg:'请联系老板创建入库信息，谢谢！'});
+    return;
+  }
+
+  const timeStr = new Date().toTimeString().split(' ')[0];
   processes.forEach(p => {
-    const record = {name: p.n, n: p.count, p: p.p, time: new Date().toLocaleTimeString('zh-CN')};
-    if(batch) record.batchCode = batch.batchCode;
+    const record = {name: p.n, n: p.count, p: p.p, time: timeStr};
+    record.batchCode = batch.batchCode;
     data.records[currentUser][date][prod].push(record);
-    if(batch) batch.wageTotal += p.count * p.p;
+    batch.wageTotal += p.count * p.p;
   });
   saveData();
 
