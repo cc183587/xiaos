@@ -790,12 +790,6 @@ function empShow(){
     return;
   }
 
-  const today = new Date().toISOString().split('T')[0];
-  const currentMonth = today.substring(0, 7);
-
-  let todayTotal = 0;
-  let monthTotal = 0;
-  let allTotal = 0;
   let html = '';
   let hasData = false;
 
@@ -818,13 +812,10 @@ function empShow(){
         if(!rec || typeof rec !== 'object') return;
         const amount = rec.n * rec.p;
         recTotal += amount;
-        allTotal += amount;
         hasData = true;
-        if(date === today) todayTotal += amount;
-        if(date.startsWith(currentMonth)) monthTotal += amount;
         html += `<div style="padding:3px 0;font-size:14px;color:#555">✓ ${rec.name || '工序'}：${rec.n}个 × ${rec.p}元/个 = ${amount.toFixed(2)}元</div>`;
       });
-      html += `<div style="text-align:right;font-weight:bold;color:#007AFF;margin-top:6px">本次登记：${recTotal.toFixed(2)}元</div>`;
+      html += `<div style="text-align:right;font-weight:bold;color:#007AFF;margin-top:6px">本次薪资：${recTotal.toFixed(2)}元</div>`;
       html += '</div>';
     });
   });
@@ -832,11 +823,6 @@ function empShow(){
   if(!hasData){
     html = '<p style="text-align:center;padding:20px;color:#999">暂无登记记录</p>';
   }
-
-  html += `<div style="margin-top:16px;padding:12px;background:#e8f4ff;border-radius:8px;text-align:center">
-    <div style="font-size:15px;font-weight:bold;color:#333">工资统计</div>
-    <div style="font-size:14px;color:#555;margin-top:6px">今日：${todayTotal.toFixed(2)} 元 | 本月：${monthTotal.toFixed(2)} 元 | 累计：${allTotal.toFixed(2)} 元</div>
-  </div>`;
 
   document.getElementById('empResult').innerHTML = html;
 }
