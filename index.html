@@ -176,14 +176,18 @@
 <div id="loginPage">
   <h1>🐱 每日产量登记</h1>
   <div class="box">
-    <input type="text" id="loginInput" placeholder="请输入工号">
+    <div style="font-size:13px;color:#666;margin-bottom:10px;text-align:center">
+      A公司管理员：sj &nbsp;|&nbsp; B公司管理员：gch<br>
+      员工工号格式：a001、b001
+    </div>
+    <input type="text" id="loginInput" placeholder="输入工号或管理员密码登录">
     <button class="btn" onclick="login()">登录</button>
   </div>
 </div>
 
 <!-- ========== 员工页面 ========== -->
 <div id="empPage" style="display:none">
-  <h1>员工产量登记</h1>
+  <h1 id="empTitle">员工产量登记</h1>
   <div id="empWelcome" style="text-align:center;color:#888;font-size:15px;margin-bottom:10px"></div>
   <div class="box">
     <div class="title">选择产品</div>
@@ -204,7 +208,7 @@
 
 <!-- ========== 管理员主页 ========== -->
 <div id="adminPage" style="display:none;padding-top:100px">
-  <h1 id="adminTitle">管理员面板</h1>
+  <h1 id="adminTitle"></h1>
   <div class="nav" id="adminNav">
     <button onclick="showAdmin('summary')" data-tab="summary">总览</button>
     <button onclick="showAdmin('batch')" data-tab="batch">出入库</button>
@@ -361,12 +365,33 @@ function modalCancel(){
   if(_modalResolve){ _modalResolve(null); _modalResolve=null; }
 }
 
-// ==================== 数据初始化 ====================
-const ADMIN_PWD = "sj";  // 管理员密码
+// ==================== 多公司配置 ====================
+// 公司列表：prefix=工号前缀, name=公司名称, adminPwd=管理员密码
+const COMPANIES = {
+  A: { prefix: "a", name: "A公司", adminPwd: "sj" },
+  B: { prefix: "b", name: "B公司", adminPwd: "gch" }
+};
+
+let currentCompany = "";  // 当前公司代码
+let data = null;  // 当前公司的数据
 
 let currentUser = "";
 let editingProdKey = null;
 let editingProcesses = [];
+
+// 根据工号前缀识别公司
+function detectCompany(empId){
+  const prefix = empId.charAt(0).toLowerCase();
+  for(const [code, info] of Object.entries(COMPANIES)){
+    if(info.prefix === prefix) return code;
+  }
+  return null;
+}
+
+// 获取公司对应的 localStorage key
+function getStorageKey(companyCode){
+  return `factoryData_${companyCode}`;
+}
 
 // 默认产品配置
 const DEFAULT_PRODUCTS = {
@@ -378,24 +403,23 @@ const DEFAULT_PRODUCTS = {
   ]}
 };
 
-let data = null;  // 当前公司的数据
-
-// 获取当前公司的数据
-function loadData(){
-  const saved = localStorage.getItem('factoryData');
+// 加载指定公司的数据
+function loadData(companyCode){
+  const storageKey = getStorageKey(companyCode);
+  const saved = localStorage.getItem(storageKey);
   if(saved){
     data = JSON.parse(saved);
   } else {
     // 初始化新公司数据
     data = {
-      emps: [{id:"001",name:""},{id:"002",name:""},{id:"003",name:""}],
+      emps: [{id:companyCode+"001",name:""},{id:companyCode+"002",name:""},{id:companyCode+"003",name:""}],
       records: {},
       products: DEFAULT_PRODUCTS,
       batches: [],
       batchSeq: {},
       regSeq: 0
     };
-    localStorage.setItem('factoryData', JSON.stringify(data));
+    localStorage.setItem(storageKey, JSON.stringify(data));
   }
 
   // 兼容旧数据：emps 可能是字符串数组
@@ -410,6 +434,8 @@ function loadData(){
   if(!data.batchSeq) data.batchSeq = {};
   // 兼容旧数据：如果没有regSeq字段
   if(!data.regSeq) data.regSeq = 0;
+  
+  currentCompany = companyCode;
 }
 
 // Toast 提示函数
@@ -430,9 +456,11 @@ function showToast(message, type = 'info', duration = 2500){
   }, duration);
 }
 
-// 保存当前公司的数据
+// 保存当前公司数据
 function saveData(){
-  localStorage.setItem('factoryData', JSON.stringify(data));
+  if(currentCompany){
+    localStorage.setItem(getStorageKey(currentCompany), JSON.stringify(data));
+  }
 }
 
 function getEmpIds(){ return data.emps.map(e => e.id); }
@@ -441,20 +469,37 @@ function getEmpName(id){ const e = data.emps.find(x=>x.id===id); return e?.name 
 // ==================== 统一登录 ====================
 function login(){
   const val = document.getElementById('loginInput').value.trim();
-  if(!val){ alert('请输入工号或密码'); return; }
+  if(!val){ showToast('请输入工号或密码', 'error'); return; }
 
-  // 管理员登录（不区分大小写）
-  if(val.toLowerCase() === ADMIN_PWD.toLowerCase()){
-    loadData();
-    document.getElementById('loginPage').style.display = 'none';
-    document.getElementById('adminPage').style.display = 'block';
-    document.querySelectorAll('.logout-float').forEach(el => el.style.display = '');
-    showAdmin('summary');
+  // 先尝试识别公司
+  let companyCode = detectCompany(val);
+  
+  // 管理员登录检测（不区分大小写）
+  const valLower = val.toLowerCase();
+  for(const [code, info] of Object.entries(COMPANIES)){
+    if(valLower === info.adminPwd.toLowerCase()){
+      companyCode = code;
+      loadData(code);
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('adminPage').style.display = 'block';
+      document.querySelectorAll('.logout-float').forEach(el => el.style.display = '');
+      document.getElementById('adminTitle').textContent = info.name + ' 管理员面板';
+      showAdmin('summary');
+      showToast(`欢迎 ${info.name} 管理员`, 'success');
+      return;
+    }
+  }
+  
+  // 如果没有识别到公司
+  if(!companyCode){
+    showToast('工号格式不正确，请以公司前缀开头（如a001、b001）', 'error');
     return;
   }
-
+  
+  // 加载对应公司数据
+  loadData(companyCode);
+  
   // 员工登录（不区分大小写）
-  loadData();  // 先加载数据
   const normalizedVal = val.toLowerCase();
   const empId = getEmpIds().find(id => id.toLowerCase() === normalizedVal);
   if(empId){
@@ -462,19 +507,22 @@ function login(){
     document.getElementById('loginPage').style.display = 'none';
     document.getElementById('empPage').style.display = 'block';
     document.querySelectorAll('.logout-float').forEach(el => el.style.display = '');
+    document.getElementById('empTitle').textContent = COMPANIES[companyCode].name + ' 员工产量登记';
     rebuildProdSelect();
     document.getElementById('empResult').innerHTML = '';
     const emp = data.emps.find(e => e.id === empId);
     document.getElementById('empWelcome').textContent = emp?.name ? '欢迎 ' + emp.name : '';
+    showToast(`欢迎 ${COMPANIES[companyCode].name}`, 'success');
     return;
   }
 
-  alert('工号不存在');
+  showToast('工号不存在', 'error');
 }
 
 // ==================== 退出登录 ====================
 function logout(){
   currentUser = "";
+  currentCompany = "";
   document.getElementById('loginPage').style.display = 'block';
   document.getElementById('adminPage').style.display = 'none';
   document.getElementById('empPage').style.display = 'none';
@@ -715,17 +763,18 @@ function parseYearMonth(dateStr){
 
 // 数据备份函数
 function backupData(){
-  const backupData = JSON.parse(localStorage.getItem('factoryData') || '{}');
+  const backupObj = JSON.parse(localStorage.getItem(getStorageKey(currentCompany)) || '{}');
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  const filename = `工厂数据备份_${timestamp}.json`;
-  const blob = new Blob([JSON.stringify(backupData, null, 2)], {type: 'application/json'});
+  const companyName = COMPANIES[currentCompany]?.name || '未知公司';
+  const filename = `${companyName}_数据备份_${timestamp}.json`;
+  const blob = new Blob([JSON.stringify(backupObj, null, 2)], {type: 'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
-  showToast('数据备份成功！', 'success');
+  showToast(`${companyName} 数据备份成功！`, 'success');
 }
 
 // 数据恢复函数
@@ -742,7 +791,7 @@ function restoreData(input){
   reader.onload = function(e){
     try {
       const importedData = JSON.parse(e.target.result);
-      localStorage.setItem('factoryData', JSON.stringify(importedData));
+      localStorage.setItem(getStorageKey(currentCompany), JSON.stringify(importedData));
       location.reload();
     } catch(err){
       showToast('数据格式错误，恢复失败！', 'error');
@@ -802,35 +851,40 @@ function adminLoadSummary(){
     
     // 累计统计 - 入库数量是所有批次数量（不管状态）
     allInQty += b.qty;
-    if(b.status === 'out'){
+
+    // 累计统计 - 出库：按每次出货明细累加（兼容partial和out）
+    if(b.deliveries && b.deliveries.length > 0){
+      b.deliveries.forEach(d => {
+        allOutQty += d.qty;
+        allProfit += d.profit || 0;
+      });
+    } else if(b.status === 'out'){
+      // 兼容旧数据（无deliveries字段）
       allOutQty += b.outQty || b.qty;
       allProfit += b.profit || 0;
     }
     
-    // 本月统计 - 入库（只看入库中的批次）
-    if(createYearMonth === thisYearMonth && b.status === 'in'){
+    // 本月统计 - 入库（按创建月份，所有状态都算入库，因为入库是创建时就发生的）
+    if(createYearMonth === thisYearMonth){
       inQty += b.qty;
     }
-    // 本月统计 - 出库（使用出库日期）
-    if(b.status === 'out'){
+    // 本月统计 - 出库（按每次出货日期统计）
+    if(b.deliveries && b.deliveries.length > 0){
+      b.deliveries.forEach(d => {
+        const outYearMonth = parseYearMonth(d.date);
+        if(outYearMonth === thisYearMonth){ outQty += d.qty; profit += d.profit||0; }
+        if(outYearMonth === lastYearMonth){ lastOutQty += d.qty; lastProfit += d.profit||0; }
+      });
+    } else if(b.status === 'out'){
+      // 兼容旧数据
       const outYearMonth = parseYearMonth(b.outDate || b.createTime);
-      if(outYearMonth === thisYearMonth){
-        outQty += b.outQty || b.qty;
-        profit += b.profit || 0;
-      }
+      if(outYearMonth === thisYearMonth){ outQty += b.outQty || b.qty; profit += b.profit||0; }
+      if(outYearMonth === lastYearMonth){ lastOutQty += b.outQty || b.qty; lastProfit += b.profit||0; }
     }
     
     // 上月统计 - 入库
-    if(createYearMonth === lastYearMonth && b.status === 'in'){
+    if(createYearMonth === lastYearMonth){
       lastInQty += b.qty;
-    }
-    // 上月统计 - 出库
-    if(b.status === 'out'){
-      const outYearMonth = parseYearMonth(b.outDate || b.createTime);
-      if(outYearMonth === lastYearMonth){
-        lastOutQty += b.outQty || b.qty;
-        lastProfit += b.profit || 0;
-      }
     }
   });
   
@@ -1157,10 +1211,79 @@ function addBatch(){
 function adminLoadBatchList(){
   const sorted = [...data.batches].reverse();
   const html = sorted.map(b => {
-    const statusText = b.status === 'in' ? '入库中' : '已出库';
-    const statusClass = b.status === 'in' ? '#f59e0b' : '#10B981';
-    const btn = b.status === 'in' ? `<button class="btn-sm btn-sm-orange" onclick="outBatch('${b.id}')" style="margin-right:6px">出库</button>` : '';
-    const outDateRow = b.outDate ? `<div class="batch-row"><span>出库日期：<span class="batch-num">${b.outDate}</span></span></div>` : '';
+    const alreadyOut = (b.deliveries || []).reduce((s, d) => s + d.qty, 0);
+    const remaining = b.qty - alreadyOut;
+    // 状态文字 & 颜色
+    let statusText, statusClass;
+    if(b.status === 'out'){
+      statusText = '已出库'; statusClass = '#10B981';
+    } else if(b.status === 'closed'){
+      statusText = '已结束'; statusClass = '#6C757D';
+    } else if(b.status === 'partial'){
+      statusText = '部分出库'; statusClass = '#007AFF';
+    } else {
+      statusText = '入库中'; statusClass = '#f59e0b';
+    }
+    // 出库按钮：入库中或部分出库才能继续出库
+    const canOut = b.status === 'in' || b.status === 'partial';
+    const btn = canOut ? `<button class="btn-sm btn-sm-orange" onclick="outBatch('${b.id}')" style="margin-right:6px">出库</button>` : '';
+
+    // 进度条
+    const pct = b.qty > 0 ? Math.round((alreadyOut / b.qty) * 100) : 0;
+    const barColor = b.status==='out' ? '#10B981' : b.status==='closed' ? '#6C757D' : b.status==='partial' ? '#007AFF' : '#E9ECEF';
+    // 报损提示
+    const lossHint = (b.lossQty > 0)
+      ? `<div style="font-size:13px;color:#6C757D;margin-top:4px;background:#f5f5f5;padding:4px 8px;border-radius:4px">
+           ⚠️ 报损 <b>${b.lossQty}</b> 件 — ${b.lossReason || ''}
+           ${b.closedTime ? '<span style="color:#aaa;margin-left:6px">'+b.closedTime+'</span>' : ''}
+         </div>`
+      : (b.status === 'closed' ? `<div style="font-size:13px;color:#10B981;margin-top:4px">✅ 批次已结束，无报损${b.closedTime?'（'+b.closedTime+'）':''}</div>` : '');
+    const progressBar = `
+      <div style="margin:10px 0 6px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#6C757D;margin-bottom:4px">
+          <span>出库进度</span>
+          <span><b>${alreadyOut}</b> / ${b.qty} 件（${pct}%）</span>
+        </div>
+        <div style="background:#E9ECEF;border-radius:4px;height:8px;overflow:hidden">
+          <div style="background:${barColor};width:${pct}%;height:100%;border-radius:4px;transition:width .3s"></div>
+        </div>
+        ${b.status === 'partial' ? `<div style="font-size:13px;color:#ff9500;margin-top:4px">剩余待出库：<b>${remaining}</b> 件</div>` : ''}
+        ${lossHint}
+      </div>`;
+
+    // 出货历史明细
+    let deliveriesHtml = '';
+    if(b.deliveries && b.deliveries.length > 0){
+      const rows = b.deliveries.map((d, i) => `
+        <tr>
+          <td style="padding:6px 8px;border-bottom:1px solid #f0f0f0;color:#495057">第${i+1}次</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #f0f0f0;font-weight:600">${d.qty} 件</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #f0f0f0;color:#10B981">¥${d.cost.toFixed(2)}</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #f0f0f0;color:#dc2626">¥${d.profit.toFixed(2)}</td>
+          <td style="padding:6px 8px;border-bottom:1px solid #f0f0f0;font-size:12px;color:#999">${d.date}</td>
+        </tr>`).join('');
+      deliveriesHtml = `
+        <div style="margin-top:10px">
+          <div style="font-size:13px;font-weight:600;color:#495057;margin-bottom:6px">📋 出货记录</div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:6px;overflow:hidden">
+            <thead><tr style="background:#f0f0f0">
+              <th style="padding:6px 8px;text-align:left;font-weight:600;color:#495057">批次</th>
+              <th style="padding:6px 8px;text-align:left;font-weight:600;color:#495057">数量</th>
+              <th style="padding:6px 8px;text-align:left;font-weight:600;color:#495057">销售额</th>
+              <th style="padding:6px 8px;text-align:left;font-weight:600;color:#495057">利润</th>
+              <th style="padding:6px 8px;text-align:left;font-weight:600;color:#495057">时间</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+          <div style="text-align:right;font-size:13px;color:#dc2626;font-weight:700;margin-top:6px">
+            累计利润：¥${b.deliveries.reduce((s,d)=>s+d.profit,0).toFixed(2)}
+          </div>
+        </div>`;
+    }
+
+    // 估算利润（未出库部分用入库价减工资估算）
+    const estimatedProfit = (b.totalCost || 0) - (b.wageTotal || 0);
+
     return `<div class="batch-card">
       <div class="batch-header">
         <div class="batch-code">${b.batchCode || ''}</div>
@@ -1169,16 +1292,20 @@ function adminLoadBatchList(){
       <div class="batch-product">${b.prodName}${b.color ? ' · '+b.color : ''}</div>
       <div class="batch-data">
         <div class="batch-row">
-          <span>数量：<span class="batch-num">${b.qty}</span> 件</span>
+          <span>入库数量：<span class="batch-num">${b.qty}</span> 件</span>
           <span>单价：<span class="batch-num">${b.price}</span> 元/件</span>
         </div>
         <div class="batch-row">
-          <span>员工工资：<span class="batch-num">${b.wageTotal.toFixed(2)}</span> 元</span>
-          <span>预估利润：<span class="batch-profit">${(b.totalCost - b.wageTotal).toFixed(2)}</span> 元</span>
+          <span>员工工资：<span class="batch-num">${(b.wageTotal||0).toFixed(2)}</span> 元</span>
+          <span>预估总利润：<span class="batch-profit">${estimatedProfit.toFixed(2)}</span> 元</span>
         </div>
-        ${outDateRow}
+        <div class="batch-row" style="font-size:13px;color:#888">
+          创建时间：${b.createTime || ''}
+        </div>
+        ${progressBar}
+        ${deliveriesHtml}
       </div>
-      <div class="batch-actions">
+      <div class="batch-actions" style="margin-top:10px">
         ${btn}<button class="btn-sm btn-sm-red" onclick="delBatch('${b.id}')">删除</button>
       </div>
     </div>`;
@@ -1189,20 +1316,168 @@ function adminLoadBatchList(){
 function outBatch(batchId){
   const batch = data.batches.find(b => b.id === batchId);
   if(!batch) return;
-  const outQty = prompt('出库数量：', batch.qty);
-  if(!outQty) return;
-  const actualOutQty = parseInt(outQty);
-  if(isNaN(actualOutQty) || actualOutQty < 0){ alert('请输入有效的数量'); return; }
-  if(actualOutQty > batch.qty){ alert('出库数量不能大于入库数量！'); return; }
-  const actualOutCost = actualOutQty * batch.price;
-  const profit = actualOutCost - batch.wageTotal;
-  batch.status = 'out';
-  batch.outQty = actualOutQty;
-  batch.outCost = actualOutCost;
-  batch.profit = profit;
-  batch.outDate = new Date().toLocaleString('zh-CN');
+  // 计算剩余可出库数量
+  const alreadyOut = (batch.deliveries || []).reduce((s, d) => s + d.qty, 0);
+  const remaining = batch.qty - alreadyOut;
+  if(remaining <= 0){ showToast('该批次已全部出库', 'info'); return; }
+
+  showOutBatchModal(batch, remaining);
+}
+
+function showOutBatchModal(batch, remaining){
+  // 动态创建出库弹窗（含两个选项卡：出库 / 结束批次）
+  let modal = document.getElementById('outBatchModal');
+  if(modal) modal.remove(); // 每次重建，避免旧事件残留
+  modal = document.createElement('div');
+  modal.id = 'outBatchModal';
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:440px">
+      <div class="modal-title">📦 批次操作</div>
+      <div id="outBatchInfo" style="background:#f8f9fa;border-radius:6px;padding:10px;margin-bottom:14px;font-size:14px;color:#555;line-height:1.9"></div>
+      <!-- 选项卡 -->
+      <div style="display:flex;gap:0;border:1px solid #ddd;border-radius:8px;overflow:hidden;margin-bottom:14px">
+        <button id="tabOutBtn" onclick="switchOutTab('out')"
+          style="flex:1;padding:9px;font-size:14px;border:none;background:#007AFF;color:#fff;cursor:pointer;font-weight:600">出库登记</button>
+        <button id="tabCloseBtn" onclick="switchOutTab('close')"
+          style="flex:1;padding:9px;font-size:14px;border:none;background:#f0f0f0;color:#555;cursor:pointer">结束批次</button>
+      </div>
+      <!-- 出库面板 -->
+      <div id="panelOut">
+        <label style="font-size:14px;color:#555;font-weight:600">本次出库数量
+          <span style="color:#ff3b30;font-weight:400">（剩余 <span id="outBatchRemaining"></span> 件）</span>
+        </label>
+        <input type="number" id="outBatchQtyInput" placeholder="请输入本次出库数量" style="margin-top:6px" min="1">
+        <div style="font-size:12px;color:#aaa;margin-top:4px">若本次不是最后一批，出库后可继续操作</div>
+      </div>
+      <!-- 结束批次面板 -->
+      <div id="panelClose" style="display:none">
+        <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:10px;margin-bottom:10px;font-size:13px;color:#7a5800">
+          ⚠️ 结束批次后将无法继续出库。适用于因 <b>缺料、次品</b> 等原因无法完全出货的情况。
+        </div>
+        <label style="font-size:14px;color:#555;font-weight:600">报损数量
+          <span style="font-size:12px;font-weight:400;color:#aaa">（剩余 <span id="outBatchRemaining2"></span> 件中实际损耗多少件）</span>
+        </label>
+        <input type="number" id="closeBatchLossQty" placeholder="报损件数（0 表示无损耗）" style="margin-top:6px" min="0">
+        <label style="font-size:14px;color:#555;font-weight:600;margin-top:10px;display:block">报损原因</label>
+        <select id="closeBatchLossReason" style="margin-top:6px">
+          <option value="缺料">缺料</option>
+          <option value="次品/质量问题">次品 / 质量问题</option>
+          <option value="返工损耗">返工损耗</option>
+          <option value="其他">其他</option>
+        </select>
+        <input type="text" id="closeBatchLossRemarkInput" placeholder="备注（选填）" style="margin-top:6px">
+      </div>
+      <div class="modal-btns" style="margin-top:16px">
+        <button class="modal-btn modal-cancel" onclick="document.getElementById('outBatchModal').classList.remove('show')">取消</button>
+        <button class="modal-btn modal-confirm" id="outBatchConfirmBtn">确认出库</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  // 选项卡切换
+  window.switchOutTab = function(tab){
+    const isOut = tab === 'out';
+    document.getElementById('tabOutBtn').style.background = isOut ? '#007AFF' : '#f0f0f0';
+    document.getElementById('tabOutBtn').style.color = isOut ? '#fff' : '#555';
+    document.getElementById('tabCloseBtn').style.background = isOut ? '#f0f0f0' : '#ff9500';
+    document.getElementById('tabCloseBtn').style.color = isOut ? '#555' : '#fff';
+    document.getElementById('panelOut').style.display = isOut ? '' : 'none';
+    document.getElementById('panelClose').style.display = isOut ? 'none' : '';
+    const confirmBtn = document.getElementById('outBatchConfirmBtn');
+    confirmBtn.textContent = isOut ? '确认出库' : '结束此批次';
+    confirmBtn.style.background = isOut ? '#007AFF' : '#ff9500';
+    confirmBtn._tab = tab;
+  };
+
+  // 填充信息
+  const alreadyOut = (batch.deliveries || []).reduce((s, d) => s + d.qty, 0);
+  document.getElementById('outBatchInfo').innerHTML =
+    `批次号：<b>${batch.batchCode}</b>　产品：<b>${batch.prodName}${batch.color ? ' · '+batch.color : ''}</b><br>
+     入库：<b>${batch.qty}</b> 件　已出库：<b>${alreadyOut}</b> 件　<span style="color:#ff9500;font-weight:600">剩余：${remaining} 件</span>`;
+  document.getElementById('outBatchRemaining').textContent = remaining;
+  document.getElementById('outBatchRemaining2').textContent = remaining;
+  document.getElementById('outBatchQtyInput').value = remaining;
+  document.getElementById('outBatchQtyInput').max = remaining;
+  document.getElementById('closeBatchLossQty').value = remaining; // 默认全损
+  document.getElementById('outBatchConfirmBtn')._tab = 'out';
+  modal.classList.add('show');
+
+  // 绑定确认按钮
+  document.getElementById('outBatchConfirmBtn').onclick = function(){
+    const tab = this._tab || 'out';
+    if(tab === 'out'){
+      const val = parseInt(document.getElementById('outBatchQtyInput').value);
+      if(isNaN(val) || val <= 0){ showToast('请输入有效数量', 'error'); return; }
+      if(val > remaining){ showToast('出库数量不能超过剩余库存 '+remaining+' 件', 'error'); return; }
+      doOutBatch(batch.id, val, false);
+    } else {
+      // 结束批次（报损关闭）
+      const lossQty = parseInt(document.getElementById('closeBatchLossQty').value) || 0;
+      if(lossQty < 0 || lossQty > remaining){ showToast('报损数量不能超过剩余库存 '+remaining+' 件', 'error'); return; }
+      const reason = document.getElementById('closeBatchLossReason').value;
+      const remark = document.getElementById('closeBatchLossRemarkInput').value.trim();
+      doCloseBatch(batch.id, lossQty, reason, remark);
+    }
+    modal.classList.remove('show');
+  };
+}
+
+// 结束批次（含报损）
+function doCloseBatch(batchId, lossQty, reason, remark){
+  const batch = data.batches.find(b => b.id === batchId);
+  if(!batch) return;
+  batch.status = 'closed';
+  batch.closedTime = new Date().toLocaleString('zh-CN');
+  if(lossQty > 0){
+    batch.lossQty = lossQty;
+    batch.lossReason = reason + (remark ? '：' + remark : '');
+  } else {
+    batch.lossQty = 0;
+    batch.lossReason = remark || '';
+  }
+  // 最终利润 = 已出货利润之和（报损部分不计利润）
+  batch.profit = (batch.deliveries || []).reduce((s, d) => s + d.profit, 0);
   saveData();
   adminLoadBatchList();
+  const msg = lossQty > 0
+    ? `批次已结束，报损 ${lossQty} 件（${reason}）`
+    : `批次已结束，无报损`;
+  showToast('✅ ' + msg, 'success');
+}
+
+function doOutBatch(batchId, qty, forceClose){
+  const batch = data.batches.find(b => b.id === batchId);
+  if(!batch) return;
+  // 初始化出货记录列表
+  if(!batch.deliveries) batch.deliveries = [];
+  const cost = qty * batch.price;
+  // 工资按出货比例分摊
+  const outRatio = qty / batch.qty;
+  const wageShare = batch.wageTotal * outRatio;
+  const profit = cost - wageShare;
+  batch.deliveries.push({
+    date: new Date().toLocaleString('zh-CN'),
+    qty: qty,
+    cost: cost,
+    wageShare: wageShare,
+    profit: profit
+  });
+  // 更新汇总字段
+  const totalOut = batch.deliveries.reduce((s, d) => s + d.qty, 0);
+  batch.outQty = totalOut;
+  batch.outCost = batch.deliveries.reduce((s, d) => s + d.cost, 0);
+  batch.profit = batch.deliveries.reduce((s, d) => s + d.profit, 0);
+  batch.outDate = batch.deliveries[batch.deliveries.length - 1].date;
+  // 更新状态
+  if(totalOut >= batch.qty){
+    batch.status = 'out';
+  } else {
+    batch.status = 'partial';
+  }
+  saveData();
+  adminLoadBatchList();
+  showToast(`✅ 出库 ${qty} 件成功${batch.status !== 'out' ? '，剩余 '+(batch.qty - totalOut)+' 件待出库' : '，批次已全部出库'}`, 'success');
 }
 
 function delBatch(batchId){
@@ -1271,9 +1546,9 @@ function adminRegister(){
   const now = new Date();
   const date = now.toISOString().split('T')[0];
   const timeStr = now.toTimeString().split(' ')[0];
-  // 找到该产品未出库的批次（FIFO），自动关联
+  // 找到该产品未出库的批次（FIFO），自动关联（in=入库中 / partial=部分出库 均可继续登记）
   const batch = [...data.batches]
-    .filter(b => b.prodKey === prodKey && b.status === 'in')
+    .filter(b => b.prodKey === prodKey && (b.status === 'in' || b.status === 'partial'))
     .sort((a, b) => a.createTime.localeCompare(b.createTime))[0];
 
   if(!batch){
@@ -1346,9 +1621,9 @@ function empAdd(){
   if(!data.records[currentUser]) data.records[currentUser] = {};
   if(!data.records[currentUser][date]) data.records[currentUser][date] = {};
   if(!data.records[currentUser][date][prod]) data.records[currentUser][date][prod] = [];
-  // 找到该产品未出库的批次（FIFO），自动关联
+  // 找到该产品未出库的批次（FIFO），自动关联（in=入库中 / partial=部分出库 均可继续登记）
   const batch = [...data.batches]
-    .filter(b => b.prodKey === prod && b.status === 'in')
+    .filter(b => b.prodKey === prod && (b.status === 'in' || b.status === 'partial'))
     .sort((a, b) => a.createTime.localeCompare(b.createTime))[0];
 
   if(!batch){
@@ -1560,14 +1835,37 @@ function adminExportReport(){
   ];
 
   // ========== 工作表2：批次信息 ==========
-  const batchRows = [['批次号','产品','颜色','数量','单价','总成本','员工工资','状态','创建时间','出库时间','预估利润']];
+  const batchRows = [['批次号','产品','颜色','入库数量','单价','总成本','员工工资','状态','已出库','报损数量','报损原因','剩余','创建时间','最后出库时间','累计利润']];
   data.batches.forEach(b => {
+    const alreadyOut = (b.deliveries || []).reduce((s, d) => s + d.qty, 0);
+    const remaining = b.qty - alreadyOut - (b.lossQty || 0);
+    const totalProfit = (b.deliveries || []).reduce((s, d) => s + d.profit, 0) || b.profit || 0;
+    let statusLabel = b.status === 'in' ? '入库中' : b.status === 'partial' ? '部分出库' : b.status === 'closed' ? '已结束' : '已出库';
     batchRows.push([
       b.batchCode || '', b.prodName || '', b.color || '', b.qty, b.price,
-      b.totalCost.toFixed(2), b.wageTotal.toFixed(2),
-      b.status === 'in' ? '入库中' : '已出库',
-      b.createTime || '', b.outDate || '', (b.profit || 0).toFixed(2)
+      (b.totalCost||0).toFixed(2), (b.wageTotal||0).toFixed(2),
+      statusLabel, alreadyOut, b.lossQty || 0, b.lossReason || '',
+      remaining < 0 ? 0 : remaining,
+      b.createTime || '', b.outDate || b.closedTime || '', totalProfit.toFixed(2)
     ]);
+    // 每次出货明细（子行）
+    if(b.deliveries && b.deliveries.length > 0){
+      b.deliveries.forEach((d, i) => {
+        batchRows.push([
+          `  └ 第${i+1}次出货`, '', '', '', '',
+          '', '', '', d.qty, '', '', '',
+          '', d.date, d.profit.toFixed(2)
+        ]);
+      });
+    }
+    // 报损行
+    if(b.lossQty > 0){
+      batchRows.push([
+        `  └ 报损`, '', '', '', '',
+        '', '', '', '', b.lossQty, b.lossReason || '', '',
+        '', b.closedTime || '', '0.00'
+      ]);
+    }
   });
 
   // ========== 工作表3：产量记录 ==========
