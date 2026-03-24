@@ -221,6 +221,13 @@
 
   <!-- 概要（点击才显示） -->
   <div id="adminSummary" style="display:none">
+    <div class="box" style="background:linear-gradient(135deg,#fff7ed,#fff);border-left:4px solid #ff9500;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:18px">☀️</span>
+        <span style="font-size:16px;font-weight:bold;color:#333">今日总览</span>
+      </div>
+      <div id="summaryTodayContent"></div>
+    </div>
     <div class="box" style="background:#f8f9fa;border-left:4px solid #007AFF">
       <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:12px">本月</div>
       <div id="summaryContent"></div>
@@ -761,6 +768,20 @@ function parseYearMonth(dateStr){
   return '';
 }
 
+// 从各种日期字符串中提取 YYYY-MM-DD（兼容 toLocaleString 中文格式和 ISO 格式）
+function extractDateStr(dateStr){
+  if(!dateStr) return '';
+  // 尝试直接解析，取本地日期部分
+  const d = new Date(dateStr);
+  if(!isNaN(d.getTime())){
+    return d.getFullYear() + '-'
+      + String(d.getMonth() + 1).padStart(2, '0') + '-'
+      + String(d.getDate()).padStart(2, '0');
+  }
+  // 兜底：截取前10位（YYYY-MM-DD 或 YYYY/MM/DD）
+  return dateStr.substring(0, 10).replace(/\//g, '-');
+}
+
 // 数据备份函数
 function backupData(){
   const backupObj = JSON.parse(localStorage.getItem(getStorageKey(currentCompany)) || '{}');
@@ -805,6 +826,9 @@ function adminLoadSummary(){
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
   
+  // 今日日期字符串 YYYY-MM-DD
+  const todayStr = now.toISOString().split('T')[0];
+
   // 计算本月的年月
   const thisYearMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
   
@@ -816,7 +840,12 @@ function adminLoadSummary(){
     lastYear = currentYear - 1;
   }
   const lastYearMonth = `${lastYear}-${String(lastMonth).padStart(2, '0')}`;
-  
+
+  // ===== 今日统计 =====
+  let todayOutQty   = 0;  // 今日出货数量
+  let todayRevenue  = 0;  // 今日出货销售额（件数×单价）
+  let todayWage     = 0;  // 今日员工工资
+
   // 本月入库数量
   let inQty = 0;
   // 本月出库数量
@@ -857,11 +886,22 @@ function adminLoadSummary(){
       b.deliveries.forEach(d => {
         allOutQty += d.qty;
         allProfit += d.profit || 0;
+        // 今日出货统计（deliveries的date是 toLocaleString，需提取日期部分）
+        const dDateStr = extractDateStr(d.date);
+        if(dDateStr === todayStr){
+          todayOutQty += d.qty;
+          todayRevenue += d.cost || (d.qty * b.price);
+        }
       });
     } else if(b.status === 'out'){
       // 兼容旧数据（无deliveries字段）
       allOutQty += b.outQty || b.qty;
       allProfit += b.profit || 0;
+      const dDateStr = extractDateStr(b.outDate || b.createTime);
+      if(dDateStr === todayStr){
+        todayOutQty += b.outQty || b.qty;
+        todayRevenue += b.outCost || ((b.outQty || b.qty) * b.price);
+      }
     }
     
     // 本月统计 - 入库（按创建月份，所有状态都算入库，因为入库是创建时就发生的）
@@ -903,6 +943,19 @@ function adminLoadSummary(){
           }
         });
       });
+
+      // 今日工资
+      if(date === todayStr){
+        Object.keys(data.records[empId][date]).forEach(prodKey => {
+          const recs = data.records[empId][date][prodKey];
+          if(!Array.isArray(recs)) return;
+          recs.forEach(rec => {
+            if(rec && typeof rec === 'object'){
+              todayWage += (rec.n || 0) * (rec.p || 0);
+            }
+          });
+        });
+      }
       
       // 本月统计
       if(recYearMonth === thisYearMonth){
@@ -932,6 +985,33 @@ function adminLoadSummary(){
     });
   });
   
+  // 今日收益 = 今日出货销售额 - 今日员工工资
+  const todayProfit = todayRevenue - todayWage;
+
+  // 渲染今日总览卡片
+  const todayHtml = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div style="background:#fff;padding:12px;border-radius:8px;text-align:center">
+        <div style="font-size:12px;color:#888;margin-bottom:4px">出货数量</div>
+        <div style="font-size:26px;font-weight:bold;color:#ff9500;line-height:1.2">${todayOutQty}</div>
+        <div style="font-size:12px;color:#aaa">件</div>
+      </div>
+      <div style="background:#fff;padding:12px;border-radius:8px;text-align:center">
+        <div style="font-size:12px;color:#888;margin-bottom:4px">员工工资</div>
+        <div style="font-size:22px;font-weight:bold;color:#ff3b30;line-height:1.2">${todayWage.toFixed(2)}</div>
+        <div style="font-size:12px;color:#aaa">元</div>
+      </div>
+      <div style="background:${todayProfit>=0?'#f0fdf4':'#fff5f5'};padding:12px;border-radius:8px;text-align:center;border:1px solid ${todayProfit>=0?'#bbf7d0':'#fecaca'}">
+        <div style="font-size:12px;color:#888;margin-bottom:4px">今日收益</div>
+        <div style="font-size:22px;font-weight:bold;color:${todayProfit>=0?'#10B981':'#ff3b30'};line-height:1.2">${todayProfit.toFixed(2)}</div>
+        <div style="font-size:12px;color:#aaa">元</div>
+      </div>
+    </div>
+    ${todayOutQty === 0 ? '<div style="text-align:center;font-size:13px;color:#bbb;margin-top:8px">今日暂无出货记录</div>' : ''}
+    <div style="margin-top:10px;font-size:12px;color:#aaa;text-align:right">${todayStr}</div>
+  `;
+  document.getElementById('summaryTodayContent').innerHTML = todayHtml;
+
   // 渲染本月统计卡片
   const html = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
