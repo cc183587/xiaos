@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>工厂产量工资管理系统</title>
+<title>工厂产量薪资管理系统</title>
 <!-- SheetJS 用于导出Excel -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <style>
@@ -80,8 +80,8 @@
   .batch-card{background:#F8F9FA;border-radius:8px;padding:16px;margin:10px 0;border:1px solid #E9ECEF;box-shadow:0 2px 8px rgba(0,0,0,.06)}
   .batch-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #E9ECEF}
   .batch-code{color:#212529;font-size:16px;font-weight:600}
-  .batch-status{color:#fff;font-size:13px;font-weight:500;padding:4px 12px;border-radius:12px}
-  .batch-product{color:#6C757D;font-size:15px;margin-bottom:14px}
+  .batch-status{font-size:13px;font-weight:600;padding:4px 12px;border-radius:20px;letter-spacing:.3px}
+  .batch-product{color:#1a1a1a;font-size:15px;font-weight:700;margin-bottom:14px}
   .batch-data{margin-bottom:12px}
   .batch-row{display:flex;justify-content:space-between;margin-bottom:10px;font-size:15px;color:#495057}
   .batch-num{color:#212529;font-weight:500}
@@ -98,6 +98,78 @@
 
   /* 薪资合计卡片样式 */
   .salary-total-card{background:#F5F7FF;border-radius:8px;padding:16px;margin-bottom:12px;border:1px solid #E0E7FF;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+
+  /* ===== 总览页面重设计 ===== */
+  .sv-today{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);border-radius:14px;padding:20px;margin:0 0 14px;color:#fff;box-shadow:0 8px 24px rgba(15,52,96,.35)}
+  .sv-today-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .sv-today-title{font-size:15px;font-weight:600;opacity:.85;letter-spacing:.5px}
+  .sv-today-date{font-size:12px;opacity:.55;background:rgba(255,255,255,.1);padding:3px 10px;border-radius:20px}
+  .sv-today-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .sv-today-cell{background:rgba(255,255,255,.08);border-radius:10px;padding:12px 8px;text-align:center;border:1px solid rgba(255,255,255,.1);transition:background .2s}
+  .sv-today-cell.positive{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3)}
+  .sv-today-cell.negative{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3)}
+  .sv-today-label{font-size:11px;opacity:.6;margin-bottom:6px;letter-spacing:.3px}
+  .sv-today-val{font-size:22px;font-weight:700;line-height:1.1;margin-bottom:2px}
+  .sv-today-val.orange{color:#ffb347}
+  .sv-today-val.red{color:#ff6b6b}
+  .sv-today-val.green{color:#6ee7b7}
+  .sv-today-val.dimred{color:#ff6b6b}
+  .sv-today-unit{font-size:11px;opacity:.5}
+  .sv-empty{text-align:center;font-size:13px;opacity:.4;margin-top:6px;padding:4px 0}
+
+  .sv-section{border-radius:12px;padding:16px;margin:0 0 12px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+  .sv-section.thismonth{background:#fff;border:1px solid #e8edf4}
+  .sv-section.lastmonth{background:#fff;border:1px solid #e8edf4}
+  .sv-section.alltime{background:#fff;border:1px solid #e8edf4}
+  .sv-section-head{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #f0f0f0}
+  .sv-section-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .sv-section-dot.blue{background:#007AFF}
+  .sv-section-dot.amber{background:#ff9500}
+  .sv-section-dot.purple{background:#8b5cf6}
+  .sv-section-label{font-size:15px;font-weight:700;color:#1a1a1a}
+  .sv-section-sub{font-size:12px;color:#aaa;margin-left:auto}
+
+  /* Tab 卡片 */
+  .sv-tab-card{padding:0;overflow:hidden}
+  .sv-tabs{display:flex;border-bottom:1px solid #f0f0f0}
+  .sv-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 8px 10px;background:none;border:none;border-bottom:3px solid transparent;cursor:pointer;transition:all .2s;position:relative;margin-bottom:-1px}
+  .sv-tab:hover{background:#f8faff}
+  .sv-tab.active{border-bottom-color:currentColor}
+  .sv-tab.active[id="svTabThis"]{border-bottom-color:#007AFF}
+  .sv-tab.active[id="svTabLast"]{border-bottom-color:#ff9500}
+  .sv-tab.active[id="svTabAll"]{border-bottom-color:#8b5cf6}
+  .sv-tab-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .sv-tab-dot.blue{background:#007AFF}
+  .sv-tab-dot.amber{background:#ff9500}
+  .sv-tab-dot.purple{background:#8b5cf6}
+  .sv-tab-name{font-size:14px;font-weight:700;color:#1a1a1a}
+  .sv-tab.active[id="svTabThis"] .sv-tab-name{color:#007AFF}
+  .sv-tab.active[id="svTabLast"] .sv-tab-name{color:#ff9500}
+  .sv-tab.active[id="svTabAll"]  .sv-tab-name{color:#8b5cf6}
+  .sv-tab-sub{font-size:11px;color:#bbb}
+  .sv-tab-panel{padding:16px}
+  .sv-kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .sv-kpi{border-radius:10px;padding:14px 12px;text-align:left}
+  .sv-kpi.in{background:#f0fdf4;border:1px solid #bbf7d0}
+  .sv-kpi.out{background:#fffbeb;border:1px solid #fde68a}
+  .sv-kpi.profit{background:#eff6ff;border:1px solid #bfdbfe}
+  .sv-kpi.wage{background:#fff5f5;border:1px solid #fecaca}
+  .sv-kpi-icon{font-size:18px;margin-bottom:6px}
+  .sv-kpi-name{font-size:12px;color:#888;margin-bottom:4px}
+  .sv-kpi-val{font-size:22px;font-weight:700;line-height:1.1;color:#1a1a1a}
+  .sv-kpi-val.green{color:#16a34a}
+  .sv-kpi-val.amber{color:#d97706}
+  .sv-kpi-val.blue{color:#2563eb}
+  .sv-kpi-val.red{color:#dc2626}
+  .sv-kpi-unit{font-size:12px;color:#aaa;margin-top:2px}
+
+  .sv-action-bar{display:flex;gap:10px;margin:4px 0 14px}
+  .sv-btn{flex:1;padding:13px;font-size:15px;font-weight:600;border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity .15s}
+  .sv-btn:active{opacity:.8}
+  .sv-btn.export{background:linear-gradient(135deg,#007AFF,#0055cc);color:#fff;box-shadow:0 3px 10px rgba(0,122,255,.3)}
+  .sv-btn.backup{background:linear-gradient(135deg,#10B981,#059669);color:#fff;box-shadow:0 3px 10px rgba(16,185,129,.3)}
+  .sv-btn.restore{background:#f0f0f0;color:#555}
+  .sv-backup-row{display:flex;gap:8px;margin-bottom:14px}
   .card-title{font-size:16px;font-weight:600;color:#2D3748;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #E0E7FF;text-align:center}
   .amount-container{display:flex;justify-content:space-between;align-items:center}
   .amount-item{text-align:center;flex:1}
@@ -118,12 +190,14 @@
   .delete-btn{background-color:#FEE2E2;color:#DC2626}
 
   /* 员工管理卡片样式 */
-  .staff-card{background:#F8F9FA;border-radius:8px;padding:20px;margin:10px 0;border:1px solid #E9ECEF;box-shadow:0 2px 8px rgba(0,0,0,.1)}
-  .staff-header{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;color:#212529;padding-bottom:12px;border-bottom:1px solid #E9ECEF;margin-bottom:12px}
-  .header-id{flex:2}.header-name{flex:3;text-align:center}.header-op{flex:2;text-align:center}
-  .staff-item{display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:10px 0;border-bottom:1px dashed #E0E6ED}
-  .staff-id{flex:2;color:#495057}.staff-name{flex:3;color:#495057;text-align:center}.staff-op{flex:2;text-align:center}
-  .del-btn{background-color:#ff3b30;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:13px;cursor:pointer}
+  .staff-card{min-width:300px;max-width:100%;background:#F8F9FA;border-radius:8px;padding:20px;margin:10px 0;border:1px solid #E9ECEF;box-shadow:0 2px 8px rgba(0,0,0,.1);overflow-x:auto}
+  .staff-header{display:flex;align-items:center;font-size:13px;font-weight:600;color:#212529;padding:10px 0;background:#E0E7FF;border-radius:6px;margin-bottom:12px;border:1px solid #C7D2FE}
+  .emp-col-id,.emp-col-name,.emp-col-op{flex:1;min-width:80px;text-align:center;padding:0 4px}
+  .staff-item{display:flex;align-items:center;font-size:13px;padding:10px 0;border-bottom:1px dashed #E0E6ED}
+  .staff-item:last-child{border-bottom:none}
+  .emp-col-id{color:#495057}.emp-col-name{color:#495057}.emp-col-op{}
+  .del-btn{background:none;border:none;color:#DC2626;font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;padding:0}
+  .del-btn:hover{color:#B91C1C}
   .empty-value{color:#8A93A1}
 
   /* 查询记录卡片样式 - 固定表头 */
@@ -156,18 +230,21 @@
   .rec-edit-btn{background:#E0E7FF;color:#4F46E5;border:none;border-radius:4px;padding:4px 8px;font-size:11px;cursor:pointer;margin:2px}
   .rec-del-btn{background:#FEE2E2;color:#DC2626;border:none;border-radius:4px;padding:4px 8px;font-size:11px;cursor:pointer;margin:2px}
 
-  /* 工资统计卡片样式 - 5列等宽布局 + 固定表头 */
-  .wage-stat-card{min-width:500px;max-width:600px;background:#F8F9FA;border-radius:8px;padding:20px;margin:10px 0;border:1px solid #E9ECEF;box-shadow:0 2px 8px rgba(0,0,0,.1);overflow-x:auto;position:relative;padding-top:50px}
-  .wage-header{display:flex;align-items:center;font-size:13px;font-weight:600;color:#212529;padding:10px 0;background:#E0E7FF;border-radius:6px;margin-bottom:12px;border:1px solid #C7D2FE}
-  .wage-id,.wage-name,.wage-today,.wage-month,.wage-total{flex:1;min-width:100px;text-align:center;padding:0 4px;color:#212529}
-  .wage-item{display:flex;align-items:center;font-size:13px;padding:10px 0;border-bottom:1px dashed #E0E6ED}
-  .wage-item:last-child{border-bottom:none}
-  .wage-id{color:#495057}.wage-name{color:#8A93A1}.wage-name.has-name{color:#495057}.wage-today{color:#4F46E5;font-weight:500}.wage-month{color:#4F46E5;font-weight:500}.wage-total{color:#4F46E5;font-weight:500}
-  .wage-footer{display:flex;align-items:center;font-size:13px;font-weight:600;color:#212529;padding:10px 0;border-top:2px solid #E0E7FF;margin-top:8px}
-  .wage-footer > div{flex:1;min-width:100px;text-align:center;padding:0 4px}
-  .wage-footer-id{color:#212529;font-weight:600}.wage-footer-name{color:#212529}
-  .wage-footer-today,.wage-footer-month,.wage-footer-total{color:#DC2626;font-weight:700;font-size:16px}
-  .wage-header{position:absolute;top:15px;left:20px;right:20px;z-index:1}
+  /* 薪资明细卡片样式 - 5列等宽布局 */
+  .salary-summary-card{min-width:500px;max-width:600px;background:#F8F9FA;border-radius:8px;padding:20px;margin:10px 0;border:1px solid #E9ECEF;box-shadow:0 2px 8px rgba(0,0,0,.1);overflow-x:auto}
+  .salary-summary-card .sum-header{display:flex;align-items:center;font-size:13px;font-weight:600;color:#212529;padding:10px 0;background:#E0E7FF;border-radius:6px;margin-bottom:12px;border:1px solid #C7D2FE}
+  .salary-summary-card .sum-header > div{flex:1;min-width:80px;text-align:center;padding:0 4px}
+  .salary-summary-card .sum-item{display:flex;align-items:center;font-size:13px;padding:10px 0;border-bottom:1px dashed #E0E6ED}
+  .salary-summary-card .sum-item:last-child{border-bottom:none}
+  .salary-summary-card .sum-item > div{flex:1;min-width:80px;text-align:center;padding:0 4px}
+  .sum-col-id{color:#495057}
+  .sum-col-name{color:#8A93A1}
+  .sum-col-name.has-value{color:#495057}
+  .sum-col-amt{color:#4F46E5;font-weight:500}
+  .salary-summary-card .sum-footer{display:flex;align-items:center;font-size:13px;padding:10px 0;font-weight:600;border-top:2px solid #E0E7FF;margin-top:8px}
+  .salary-summary-card .sum-footer > div{flex:1;min-width:80px;text-align:center;padding:0 4px}
+  .sum-footer-id{color:#212529;font-weight:600}
+  .sum-footer-amt{color:#DC2626;font-weight:700;font-size:16px}
 </style>
 </head>
 <body>
@@ -176,11 +253,7 @@
 <div id="loginPage">
   <h1>🐱 每日产量登记</h1>
   <div class="box">
-    <div style="font-size:13px;color:#666;margin-bottom:10px;text-align:center">
-      A公司管理员：sj &nbsp;|&nbsp; B公司管理员：gch<br>
-      员工工号格式：a001、b001
-    </div>
-    <input type="text" id="loginInput" placeholder="输入工号或管理员密码登录">
+    <input type="text" id="loginInput" placeholder="请输入工号">
     <button class="btn" onclick="login()">登录</button>
   </div>
 </div>
@@ -216,41 +289,61 @@
     <button onclick="showAdmin('emp')" data-tab="emp">员工管理</button>
     <button onclick="showAdmin('register')" data-tab="register">产量登记</button>
     <button onclick="showAdmin('record')" data-tab="record">查询记录</button>
-    <button onclick="showAdmin('total')" data-tab="total">工资统计</button>
+    <button onclick="showAdmin('total')" data-tab="total">薪资明细</button>
   </div>
 
   <!-- 概要（点击才显示） -->
   <div id="adminSummary" style="display:none">
-    <div class="box" style="background:linear-gradient(135deg,#fff7ed,#fff);border-left:4px solid #ff9500;margin-bottom:10px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-        <span style="font-size:18px">☀️</span>
-        <span style="font-size:16px;font-weight:bold;color:#333">今日总览</span>
+
+    <!-- 今日总览 -->
+    <div id="summaryTodayContent"></div>
+
+    <!-- 操作按钮行 -->
+    <div class="sv-action-bar">
+      <button class="sv-btn export" onclick="adminExportReport()">
+        <span>📊</span> 导出报表
+      </button>
+    </div>
+
+    <!-- 本月/上月/累计 Tab 卡片 -->
+    <div class="sv-section sv-tab-card">
+      <!-- Tab 标签栏 -->
+      <div class="sv-tabs">
+        <button class="sv-tab active" onclick="switchSvTab('this')" id="svTabThis">
+          <span class="sv-tab-dot blue"></span>
+          <span class="sv-tab-name">本月</span>
+          <span class="sv-tab-sub" id="svThisMonthLabel"></span>
+        </button>
+        <button class="sv-tab" onclick="switchSvTab('last')" id="svTabLast">
+          <span class="sv-tab-dot amber"></span>
+          <span class="sv-tab-name">上月</span>
+          <span class="sv-tab-sub" id="svLastMonthLabel"></span>
+        </button>
+        <button class="sv-tab" onclick="switchSvTab('all')" id="svTabAll">
+          <span class="sv-tab-dot purple"></span>
+          <span class="sv-tab-name">累计</span>
+          <span class="sv-tab-sub">全部</span>
+        </button>
       </div>
-      <div id="summaryTodayContent"></div>
+      <!-- Tab 内容区 -->
+      <div id="svPanelThis" class="sv-tab-panel"><div id="summaryContent"></div></div>
+      <div id="svPanelLast" class="sv-tab-panel" style="display:none"><div id="summaryLastContent"></div></div>
+      <div id="svPanelAll"  class="sv-tab-panel" style="display:none"><div id="summaryAllContent"></div></div>
     </div>
-    <div class="box" style="background:#f8f9fa;border-left:4px solid #007AFF">
-      <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:12px">本月</div>
-      <div id="summaryContent"></div>
-    </div>
-    <div class="box" style="background:#fff5e6;border-left:4px solid #ff9500">
-      <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:12px">上月</div>
-      <div id="summaryLastContent"></div>
-    </div>
-    <div class="box" style="background:#fff8f0;border-left:4px solid #ff9500">
-      <div style="font-size:16px;font-weight:bold;color:#333;margin-bottom:12px">累计</div>
-      <div id="summaryAllContent"></div>
-    </div>
-    <button class="btn" onclick="adminExportReport()">导出报表</button>
-    <div class="box" style="margin-top:16px;background:#fff">
-      <div style="font-size:14px;font-weight:bold;color:#333;margin-bottom:12px">数据备份 / 恢复</div>
-      <div style="display:flex;gap:10px">
-        <button class="btn" style="flex:1;background:#10B981" onclick="backupData()">备份数据</button>
-        <label class="btn" style="flex:1;background:#007AFF;cursor:pointer;text-align:center;line-height:42px">
-          恢复数据
+    <!-- 备份恢复 -->
+    <div class="sv-section alltime" style="margin-top:0">
+      <div class="sv-section-head" style="margin-bottom:12px;padding-bottom:10px">
+        <span style="font-size:16px">🗄️</span>
+        <span class="sv-section-label" style="margin-left:4px">数据备份 / 恢复</span>
+      </div>
+      <div class="sv-backup-row">
+        <button class="sv-btn backup" onclick="backupData()"><span>💾</span> 备份数据</button>
+        <label class="sv-btn restore" style="cursor:pointer;text-align:center">
+          <span>📂</span> 恢复数据
           <input type="file" id="restoreFile" accept=".json" style="display:none" onchange="restoreData(this)">
         </label>
       </div>
-      <div style="font-size:12px;color:#999;margin-top:8px">备份将下载完整数据文件，恢复将覆盖当前数据</div>
+      <div style="font-size:12px;color:#bbb;text-align:center">备份将下载完整数据文件，恢复将覆盖当前数据</div>
     </div>
   </div>
   <button class="logout-float" onclick="logout()">退出</button>
@@ -277,7 +370,7 @@
     <div id="adminRecordList"></div>
   </div>
 
-  <!-- 工资统计 -->
+  <!-- 薪资明细 -->
   <div id="adminTotal" style="display:none">
     <div id="adminTotalList"></div>
   </div>
@@ -474,9 +567,18 @@ function getEmpIds(){ return data.emps.map(e => e.id); }
 function getEmpName(id){ const e = data.emps.find(x=>x.id===id); return e?.name || ""; }
 
 // ==================== 统一登录 ====================
+// 根据当前小时返回时间段问候语
+function getGreeting(){
+  const h = new Date().getHours();
+  if(h >= 5 && h < 12)  return '早上好！';
+  if(h >= 12 && h < 14) return '中午好！';
+  if(h >= 14 && h < 18) return '下午好！';
+  return '晚上好！';
+}
+
 function login(){
   const val = document.getElementById('loginInput').value.trim();
-  if(!val){ showToast('请输入工号或密码', 'error'); return; }
+  if(!val){ showToast('请输入工号', 'error'); return; }
 
   // 先尝试识别公司
   let companyCode = detectCompany(val);
@@ -492,7 +594,7 @@ function login(){
       document.querySelectorAll('.logout-float').forEach(el => el.style.display = '');
       document.getElementById('adminTitle').textContent = info.name + ' 管理员面板';
       showAdmin('summary');
-      showToast(`欢迎 ${info.name} 管理员`, 'success');
+      showToast(`${getGreeting()} ${info.name} 管理员，登录成功`, 'success');
       return;
     }
   }
@@ -518,8 +620,11 @@ function login(){
     rebuildProdSelect();
     document.getElementById('empResult').innerHTML = '';
     const emp = data.emps.find(e => e.id === empId);
-    document.getElementById('empWelcome').textContent = emp?.name ? '欢迎 ' + emp.name : '';
-    showToast(`欢迎 ${COMPANIES[companyCode].name}`, 'success');
+    const empName = emp?.name || '';
+    const greeting = getGreeting();
+    // 欢迎语：早上好！廖雪晴 同学
+    document.getElementById('empWelcome').textContent = empName ? `${greeting} ${empName} 同学` : greeting;
+    showToast(`登录成功`, 'success');
     return;
   }
 
@@ -597,15 +702,15 @@ function adminAddEmp(){
 function adminLoadEmpList(){
   const html = `<div class="staff-card">
     <div class="staff-header">
-      <div class="header-id">工号</div>
-      <div class="header-name">姓名</div>
-      <div class="header-op">操作</div>
+      <div class="emp-col-id">工号</div>
+      <div class="emp-col-name">姓名</div>
+      <div class="emp-col-op">操作</div>
     </div>
     ${data.emps.map(e => `
       <div class="staff-item">
-        <div class="staff-id">${e.id}</div>
-        <div class="staff-name ${!e.name ? 'empty-value' : ''}">${e.name || '-'}</div>
-        <div class="staff-op"><button class="del-btn" onclick="adminDelEmp('${e.id}')">删除</button></div>
+        <div class="emp-col-id">${e.id}</div>
+        <div class="emp-col-name ${!e.name ? 'empty-value' : ''}">${e.name || '-'}</div>
+        <div class="emp-col-op"><button class="del-btn" onclick="adminDelEmp('${e.id}')">删除</button></div>
       </div>
     `).join('')}
   </div>`;
@@ -821,6 +926,15 @@ function restoreData(input){
   reader.readAsText(file);
 }
 
+function switchSvTab(tab){
+  // 切换面板显示
+  ['this','last','all'].forEach(t => {
+    document.getElementById('svPanel'+t.charAt(0).toUpperCase()+t.slice(1)).style.display = t === tab ? '' : 'none';
+    const btn = document.getElementById('svTab'+t.charAt(0).toUpperCase()+t.slice(1));
+    btn.classList.toggle('active', t === tab);
+  });
+}
+
 function adminLoadSummary(){
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -844,7 +958,7 @@ function adminLoadSummary(){
   // ===== 今日统计 =====
   let todayOutQty   = 0;  // 今日出货数量
   let todayRevenue  = 0;  // 今日出货销售额（件数×单价）
-  let todayWage     = 0;  // 今日员工工资
+  let todayWage     = 0;  // 今日员工薪资
 
   // 本月入库数量
   let inQty = 0;
@@ -852,7 +966,7 @@ function adminLoadSummary(){
   let outQty = 0;
   // 本月利润
   let profit = 0;
-  // 本月员工工资合计
+  // 本月员工薪资合计
   let wageTotal = 0;
   
   // 上月入库数量
@@ -861,7 +975,7 @@ function adminLoadSummary(){
   let lastOutQty = 0;
   // 上月利润
   let lastProfit = 0;
-  // 上月员工工资合计
+  // 上月员工薪资合计
   let lastWageTotal = 0;
   
   // 累计入库数量
@@ -870,7 +984,7 @@ function adminLoadSummary(){
   let allOutQty = 0;
   // 累计利润
   let allProfit = 0;
-  // 累计员工工资
+  // 累计员工薪资
   let allWageTotal = 0;
   
   // 遍历批次统计出入库
@@ -928,7 +1042,7 @@ function adminLoadSummary(){
     }
   });
   
-  // 遍历记录统计员工工资
+  // 遍历记录统计员工薪资
   Object.keys(data.records || {}).forEach(empId => {
     Object.keys(data.records[empId]).forEach(date => {
       const recYearMonth = date.substring(0, 7); // date 格式是 YYYY-MM-DD
@@ -944,7 +1058,7 @@ function adminLoadSummary(){
         });
       });
 
-      // 今日工资
+      // 今日薪资
       if(date === todayStr){
         Object.keys(data.records[empId][date]).forEach(prodKey => {
           const recs = data.records[empId][date][prodKey];
@@ -985,122 +1099,94 @@ function adminLoadSummary(){
     });
   });
   
-  // 今日收益 = 今日出货销售额 - 今日员工工资
+  // 今日收益 = 今日出货销售额 - 今日员工薪资
   const todayProfit = todayRevenue - todayWage;
 
-  // 渲染今日总览卡片
+  // —— 今日总览卡片（深色风格）——
+  const todayProfitClass = todayProfit >= 0 ? 'green' : 'dimred';
+  const todayProfitCellClass = todayProfit >= 0 ? 'positive' : 'negative';
   const todayHtml = `
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-      <div style="background:#fff;padding:12px;border-radius:8px;text-align:center">
-        <div style="font-size:12px;color:#888;margin-bottom:4px">出货数量</div>
-        <div style="font-size:26px;font-weight:bold;color:#ff9500;line-height:1.2">${todayOutQty}</div>
-        <div style="font-size:12px;color:#aaa">件</div>
+    <div class="sv-today">
+      <div class="sv-today-header">
+        <span class="sv-today-title">☀️ 今日总览</span>
+        <span class="sv-today-date">${todayStr}</span>
       </div>
-      <div style="background:#fff;padding:12px;border-radius:8px;text-align:center">
-        <div style="font-size:12px;color:#888;margin-bottom:4px">员工工资</div>
-        <div style="font-size:22px;font-weight:bold;color:#ff3b30;line-height:1.2">${todayWage.toFixed(2)}</div>
-        <div style="font-size:12px;color:#aaa">元</div>
+      <div class="sv-today-grid">
+        <div class="sv-today-cell">
+          <div class="sv-today-label">出货数量</div>
+          <div class="sv-today-val orange">${todayOutQty}</div>
+          <div class="sv-today-unit">件</div>
+        </div>
+        <div class="sv-today-cell">
+          <div class="sv-today-label">员工薪资</div>
+          <div class="sv-today-val red">${todayWage.toFixed(2)}</div>
+          <div class="sv-today-unit">元</div>
+        </div>
+        <div class="sv-today-cell ${todayProfitCellClass}">
+          <div class="sv-today-label">今日收益</div>
+          <div class="sv-today-val ${todayProfitClass}">${todayProfit >= 0 ? '+' : ''}${todayProfit.toFixed(2)}</div>
+          <div class="sv-today-unit">元</div>
+        </div>
       </div>
-      <div style="background:${todayProfit>=0?'#f0fdf4':'#fff5f5'};padding:12px;border-radius:8px;text-align:center;border:1px solid ${todayProfit>=0?'#bbf7d0':'#fecaca'}">
-        <div style="font-size:12px;color:#888;margin-bottom:4px">今日收益</div>
-        <div style="font-size:22px;font-weight:bold;color:${todayProfit>=0?'#10B981':'#ff3b30'};line-height:1.2">${todayProfit.toFixed(2)}</div>
-        <div style="font-size:12px;color:#aaa">元</div>
-      </div>
+      ${todayOutQty === 0 ? '<div class="sv-empty">今日暂无出货记录</div>' : ''}
     </div>
-    ${todayOutQty === 0 ? '<div style="text-align:center;font-size:13px;color:#bbb;margin-top:8px">今日暂无出货记录</div>' : ''}
-    <div style="margin-top:10px;font-size:12px;color:#aaa;text-align:right">${todayStr}</div>
   `;
   document.getElementById('summaryTodayContent').innerHTML = todayHtml;
 
-  // 渲染本月统计卡片
-  const html = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div style="background:#fff;padding:12px;border-radius:8px;text-align:center">
-        <div style="font-size:13px;color:#888">在库数量</div>
-        <div style="font-size:24px;font-weight:bold;color:#34c759">${inQty}</div>
-        <div style="font-size:12px;color:#aaa">件</div>
+  // 辅助函数：生成 KPI 网格
+  function renderKpiGrid(inLabel, inVal, inUnit, outLabel, outVal, outUnit, profitVal, wageVal){
+    return `
+      <div class="sv-kpi-grid">
+        <div class="sv-kpi in">
+          <div class="sv-kpi-icon">📦</div>
+          <div class="sv-kpi-name">${inLabel}</div>
+          <div class="sv-kpi-val green">${inVal}</div>
+          <div class="sv-kpi-unit">${inUnit}</div>
+        </div>
+        <div class="sv-kpi out">
+          <div class="sv-kpi-icon">🚚</div>
+          <div class="sv-kpi-name">${outLabel}</div>
+          <div class="sv-kpi-val amber">${outVal}</div>
+          <div class="sv-kpi-unit">${outUnit}</div>
+        </div>
+        <div class="sv-kpi profit">
+          <div class="sv-kpi-icon">💰</div>
+          <div class="sv-kpi-name">预估利润</div>
+          <div class="sv-kpi-val blue">¥${profitVal}</div>
+          <div class="sv-kpi-unit">元</div>
+        </div>
+        <div class="sv-kpi wage">
+          <div class="sv-kpi-icon">👷</div>
+          <div class="sv-kpi-name">员工薪资</div>
+          <div class="sv-kpi-val red">¥${wageVal}</div>
+          <div class="sv-kpi-unit">元</div>
+        </div>
       </div>
-      <div style="background:#fff;padding:12px;border-radius:8px;text-align:center">
-        <div style="font-size:13px;color:#888">出库数量</div>
-        <div style="font-size:24px;font-weight:bold;color:#ff9500">${outQty}</div>
-        <div style="font-size:12px;color:#aaa">件</div>
-      </div>
-      <div style="background:#fff;padding:12px;border-radius:8px;text-align:center">
-        <div style="font-size:13px;color:#888">预估利润</div>
-        <div style="font-size:24px;font-weight:bold;color:#007AFF">${profit.toFixed(2)}</div>
-        <div style="font-size:12px;color:#aaa">元</div>
-      </div>
-      <div style="background:#fff;padding:12px;border-radius:8px;text-align:center">
-        <div style="font-size:13px;color:#888">员工工资</div>
-        <div style="font-size:24px;font-weight:bold;color:#ff3b30">${wageTotal.toFixed(2)}</div>
-        <div style="font-size:12px;color:#aaa">元</div>
-      </div>
-    </div>
-    <div style="margin-top:12px;font-size:13px;color:#666;text-align:center">
-      ${currentYear}年${currentMonth}月数据
-    </div>
-  `;
-  document.getElementById('summaryContent').innerHTML = html;
-  
-  // 渲染上月统计卡片
-  const lastHtml = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div style="background:#fff;padding:12px;border-radius:8px;text-align:center">
-        <div style="font-size:13px;color:#888">入库数量</div>
-        <div style="font-size:24px;font-weight:bold;color:#34c759">${lastInQty}</div>
-        <div style="font-size:12px;color:#aaa">件</div>
-      </div>
-      <div style="background:#fff;padding:12px;border-radius:8px;text-align:center">
-        <div style="font-size:13px;color:#888">出库数量</div>
-        <div style="font-size:24px;font-weight:bold;color:#ff9500">${lastOutQty}</div>
-        <div style="font-size:12px;color:#aaa">件</div>
-      </div>
-      <div style="background:#fff;padding:12px;border-radius:8px;text-align:center">
-        <div style="font-size:13px;color:#888">预估利润</div>
-        <div style="font-size:24px;font-weight:bold;color:#007AFF">${lastProfit.toFixed(2)}</div>
-        <div style="font-size:12px;color:#aaa">元</div>
-      </div>
-      <div style="background:#fff;padding:12px;border-radius:8px;text-align:center">
-        <div style="font-size:13px;color:#888">员工工资</div>
-        <div style="font-size:24px;font-weight:bold;color:#ff3b30">${lastWageTotal.toFixed(2)}</div>
-        <div style="font-size:12px;color:#aaa">元</div>
-      </div>
-    </div>
-    <div style="margin-top:12px;font-size:13px;color:#666;text-align:center">
-      ${lastYear}年${lastMonth}月数据
-    </div>
-  `;
-  document.getElementById('summaryLastContent').innerHTML = lastHtml;
-  
-  // 渲染累计统计卡片
-  const allHtml = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div style="background:#fff;padding:12px;border-radius:8px;text-align:center">
-        <div style="font-size:13px;color:#888">入库数量</div>
-        <div style="font-size:24px;font-weight:bold;color:#34c759">${allInQty}</div>
-        <div style="font-size:12px;color:#aaa">件</div>
-      </div>
-      <div style="background:#fff;padding:12px;border-radius:8px;text-align:center">
-        <div style="font-size:13px;color:#888">出库数量</div>
-        <div style="font-size:24px;font-weight:bold;color:#ff9500">${allOutQty}</div>
-        <div style="font-size:12px;color:#aaa">件</div>
-      </div>
-      <div style="background:#fff;padding:12px;border-radius:8px;text-align:center">
-        <div style="font-size:13px;color:#888">预估利润</div>
-        <div style="font-size:24px;font-weight:bold;color:#007AFF">${allProfit.toFixed(2)}</div>
-        <div style="font-size:12px;color:#aaa">元</div>
-      </div>
-      <div style="background:#fff;padding:12px;border-radius:8px;text-align:center">
-        <div style="font-size:13px;color:#888">员工工资</div>
-        <div style="font-size:24px;font-weight:bold;color:#ff3b30">${allWageTotal.toFixed(2)}</div>
-        <div style="font-size:12px;color:#aaa">元</div>
-      </div>
-    </div>
-    <div style="margin-top:12px;font-size:13px;color:#666;text-align:center">
-      所有时间累计
-    </div>
-  `;
-  document.getElementById('summaryAllContent').innerHTML = allHtml;
+    `;
+  }
+
+  // —— 本月 ——
+  document.getElementById('svThisMonthLabel').textContent = `${currentYear}年${currentMonth}月`;
+  document.getElementById('summaryContent').innerHTML = renderKpiGrid(
+    '在库数量', inQty, '件',
+    '出库数量', outQty, '件',
+    profit.toFixed(2), wageTotal.toFixed(2)
+  );
+
+  // —— 上月 ——
+  document.getElementById('svLastMonthLabel').textContent = `${lastYear}年${lastMonth}月`;
+  document.getElementById('summaryLastContent').innerHTML = renderKpiGrid(
+    '入库数量', lastInQty, '件',
+    '出库数量', lastOutQty, '件',
+    lastProfit.toFixed(2), lastWageTotal.toFixed(2)
+  );
+
+  // —— 累计 ——
+  document.getElementById('summaryAllContent').innerHTML = renderKpiGrid(
+    '总入库', allInQty, '件',
+    '总出库', allOutQty, '件',
+    allProfit.toFixed(2), allWageTotal.toFixed(2)
+  );
 }
 
 function adminLoadTotal(){
@@ -1108,13 +1194,13 @@ function adminLoadTotal(){
   const todayStr = now.toISOString().split('T')[0];
   const thisMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-  let html = `<div class="wage-stat-card">
-    <div class="wage-header">
-      <div class="wage-id">工号</div>
-      <div class="wage-name">姓名</div>
-      <div class="wage-today">今日</div>
-      <div class="wage-month">本月</div>
-      <div class="wage-total">累计</div>
+  let html = `<div class="salary-summary-card">
+    <div class="sum-header">
+      <div>工号</div>
+      <div>姓名</div>
+      <div>今日</div>
+      <div>本月</div>
+      <div>累计</div>
     </div>`;
 
   let grandToday = 0, grandMonth = 0, grandTotal = 0;
@@ -1152,25 +1238,25 @@ function adminLoadTotal(){
 
     if(allAmt > 0){
       hasData = true;
-      const nameClass = emp.name ? 'wage-name has-name' : 'wage-name';
-      html += `<div class="wage-item">
-        <div class="wage-id">${empId}</div>
+      const nameClass = emp.name ? 'sum-col-name has-value' : 'sum-col-name';
+      html += `<div class="sum-item">
+        <div class="sum-col-id">${empId}</div>
         <div class="${nameClass}">${emp.name || '-'}</div>
-        <div class="wage-today">${todayAmt.toFixed(2)}</div>
-        <div class="wage-month">${monthAmt.toFixed(2)}</div>
-        <div class="wage-total">${allAmt.toFixed(2)}</div>
+        <div class="sum-col-amt">${todayAmt.toFixed(2)}</div>
+        <div class="sum-col-amt">${monthAmt.toFixed(2)}</div>
+        <div class="sum-col-amt">${allAmt.toFixed(2)}</div>
       </div>`;
     }
   });
 
   // 合计行
   if(hasData){
-    html += `<div class="wage-footer">
-      <div class="wage-footer-id">合计</div>
-      <div class="wage-footer-name"></div>
-      <div class="wage-footer-today">${grandToday.toFixed(2)}</div>
-      <div class="wage-footer-month">${grandMonth.toFixed(2)}</div>
-      <div class="wage-footer-total">${grandTotal.toFixed(2)}</div>
+    html += `<div class="sum-footer">
+      <div class="sum-footer-id">合计</div>
+      <div></div>
+      <div class="sum-footer-amt">${grandToday.toFixed(2)}</div>
+      <div class="sum-footer-amt">${grandMonth.toFixed(2)}</div>
+      <div class="sum-footer-amt">${grandTotal.toFixed(2)}</div>
     </div>`;
   }
 
@@ -1293,16 +1379,16 @@ function adminLoadBatchList(){
   const html = sorted.map(b => {
     const alreadyOut = (b.deliveries || []).reduce((s, d) => s + d.qty, 0);
     const remaining = b.qty - alreadyOut;
-    // 状态文字 & 颜色
-    let statusText, statusClass;
+    // 状态文字 & 颜色：bg=背景色, color=文字色, border=边框色
+    let statusText, statusBg, statusColor, statusBorder;
     if(b.status === 'out'){
-      statusText = '已出库'; statusClass = '#10B981';
+      statusText = '✅ 已出库'; statusBg = '#ecfdf5'; statusColor = '#059669'; statusBorder = '#6ee7b7';
     } else if(b.status === 'closed'){
-      statusText = '已结束'; statusClass = '#6C757D';
+      statusText = '⛔ 已结束'; statusBg = '#f3f4f6'; statusColor = '#6b7280'; statusBorder = '#d1d5db';
     } else if(b.status === 'partial'){
-      statusText = '部分出库'; statusClass = '#007AFF';
+      statusText = '🚚 部分出库'; statusBg = '#eff6ff'; statusColor = '#2563eb'; statusBorder = '#93c5fd';
     } else {
-      statusText = '入库中'; statusClass = '#f59e0b';
+      statusText = '📦 入库中'; statusBg = '#fffbeb'; statusColor = '#d97706'; statusBorder = '#fcd34d';
     }
     // 出库按钮：入库中或部分出库才能继续出库
     const canOut = b.status === 'in' || b.status === 'partial';
@@ -1310,7 +1396,7 @@ function adminLoadBatchList(){
 
     // 进度条
     const pct = b.qty > 0 ? Math.round((alreadyOut / b.qty) * 100) : 0;
-    const barColor = b.status==='out' ? '#10B981' : b.status==='closed' ? '#6C757D' : b.status==='partial' ? '#007AFF' : '#E9ECEF';
+    const barColor = b.status==='out' ? '#10B981' : b.status==='closed' ? '#9ca3af' : b.status==='partial' ? '#3b82f6' : '#fbbf24';
     // 报损提示
     const lossHint = (b.lossQty > 0)
       ? `<div style="font-size:13px;color:#6C757D;margin-top:4px;background:#f5f5f5;padding:4px 8px;border-radius:4px">
@@ -1336,48 +1422,61 @@ function adminLoadBatchList(){
     if(b.deliveries && b.deliveries.length > 0){
       const rows = b.deliveries.map((d, i) => `
         <tr>
-          <td style="padding:6px 8px;border-bottom:1px solid #f0f0f0;color:#495057">第${i+1}次</td>
-          <td style="padding:6px 8px;border-bottom:1px solid #f0f0f0;font-weight:600">${d.qty} 件</td>
-          <td style="padding:6px 8px;border-bottom:1px solid #f0f0f0;color:#10B981">¥${d.cost.toFixed(2)}</td>
-          <td style="padding:6px 8px;border-bottom:1px solid #f0f0f0;color:#dc2626">¥${d.profit.toFixed(2)}</td>
-          <td style="padding:6px 8px;border-bottom:1px solid #f0f0f0;font-size:12px;color:#999">${d.date}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;color:#495057">第${i+1}次</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;font-weight:600">${d.qty} 件</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;color:#10B981">¥${d.cost.toFixed(2)}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;color:#dc2626">¥${d.profit.toFixed(2)}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;font-size:12px;color:#999">${d.date}</td>
         </tr>`).join('');
       deliveriesHtml = `
         <div style="margin-top:10px">
           <div style="font-size:13px;font-weight:600;color:#495057;margin-bottom:6px">📋 出货记录</div>
-          <table style="width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:6px;overflow:hidden">
-            <thead><tr style="background:#f0f0f0">
-              <th style="padding:6px 8px;text-align:left;font-weight:600;color:#495057">批次</th>
-              <th style="padding:6px 8px;text-align:left;font-weight:600;color:#495057">数量</th>
-              <th style="padding:6px 8px;text-align:left;font-weight:600;color:#495057">销售额</th>
-              <th style="padding:6px 8px;text-align:left;font-weight:600;color:#495057">利润</th>
-              <th style="padding:6px 8px;text-align:left;font-weight:600;color:#495057">时间</th>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:6px;overflow:hidden;border:1px solid #C7D2FE">
+            <thead><tr style="background:#E0E7FF;border-bottom:1px solid #C7D2FE">
+              <th style="padding:8px 10px;text-align:left;font-weight:700;color:#374151;font-size:12px;letter-spacing:.5px">序号</th>
+              <th style="padding:8px 10px;text-align:left;font-weight:700;color:#374151;font-size:12px;letter-spacing:.5px">出货数量</th>
+              <th style="padding:8px 10px;text-align:left;font-weight:700;color:#374151;font-size:12px;letter-spacing:.5px">销售额</th>
+              <th style="padding:8px 10px;text-align:left;font-weight:700;color:#374151;font-size:12px;letter-spacing:.5px">利润</th>
+              <th style="padding:8px 10px;text-align:left;font-weight:700;color:#374151;font-size:12px;letter-spacing:.5px">出货时间</th>
             </tr></thead>
             <tbody>${rows}</tbody>
           </table>
           <div style="text-align:right;font-size:13px;color:#dc2626;font-weight:700;margin-top:6px">
-            累计利润：¥${b.deliveries.reduce((s,d)=>s+d.profit,0).toFixed(2)}
+            实际利润：¥${b.deliveries.reduce((s,d)=>s+d.profit,0).toFixed(2)}
           </div>
         </div>`;
     }
 
-    // 估算利润（未出库部分用入库价减工资估算）
+    // 估算利润（未出库部分用入库价减薪资估算）
     const estimatedProfit = (b.totalCost || 0) - (b.wageTotal || 0);
+
+    // 颜色 badge：根据颜色名称映射底色+文字色
+    const colorMap = {
+      '红':   { bg: '#ef4444', text: '#fff',    border: '#dc2626' },
+      '黑':   { bg: '#1f2937', text: '#fff',    border: '#111827' },
+      '白':   { bg: '#f9fafb', text: '#374151', border: '#d1d5db' },
+      '粉':   { bg: '#fbcfe8', text: '#9d174d', border: '#f9a8d4' },
+      '米白': { bg: '#fef3c7', text: '#92400e', border: '#fde68a' },
+    };
+    const colorBadge = b.color ? (() => {
+      const c = colorMap[b.color] || { bg: '#e5e7eb', text: '#374151', border: '#d1d5db' };
+      return `<span style="display:inline-block;background:${c.bg};color:${c.text};border:1px solid ${c.border};border-radius:12px;font-size:12px;font-weight:600;padding:2px 10px;margin-left:6px;vertical-align:middle">${b.color}</span>`;
+    })() : '';
 
     return `<div class="batch-card">
       <div class="batch-header">
         <div class="batch-code">${b.batchCode || ''}</div>
-        <div class="batch-status" style="background-color:${statusClass}">${statusText}</div>
+        <div class="batch-status" style="background:${statusBg};color:${statusColor};border:1px solid ${statusBorder}">${statusText}</div>
       </div>
-      <div class="batch-product">${b.prodName}${b.color ? ' · '+b.color : ''}</div>
+      <div class="batch-product">${b.prodName}${colorBadge}</div>
       <div class="batch-data">
         <div class="batch-row">
           <span>入库数量：<span class="batch-num">${b.qty}</span> 件</span>
           <span>单价：<span class="batch-num">${b.price}</span> 元/件</span>
         </div>
         <div class="batch-row">
-          <span>员工工资：<span class="batch-num">${(b.wageTotal||0).toFixed(2)}</span> 元</span>
-          <span>预估总利润：<span class="batch-profit">${estimatedProfit.toFixed(2)}</span> 元</span>
+          <span>员工薪资：<span class="batch-num">${(b.wageTotal||0).toFixed(2)}</span> 元</span>
+          <span>预估利润：<span class="batch-profit">${estimatedProfit.toFixed(2)}</span> 元</span>
         </div>
         <div class="batch-row" style="font-size:13px;color:#888">
           创建时间：${b.createTime || ''}
@@ -1532,7 +1631,7 @@ function doOutBatch(batchId, qty, forceClose){
   // 初始化出货记录列表
   if(!batch.deliveries) batch.deliveries = [];
   const cost = qty * batch.price;
-  // 工资按出货比例分摊
+  // 薪资按出货比例分摊
   const outRatio = qty / batch.qty;
   const wageShare = batch.wageTotal * outRatio;
   const profit = cost - wageShare;
@@ -1587,7 +1686,8 @@ document.getElementById('regEmp').addEventListener('change', function(){
   const nameEl = document.getElementById('regEmpName');
   if(empId){
     const emp = data.emps.find(e => e.id === empId);
-    nameEl.textContent = emp?.name ? '欢迎 ' + emp.name : '';
+    const empName = emp?.name || '';
+    nameEl.textContent = empName ? `${getGreeting()} ${empName} 同学` : '';
   } else {
     nameEl.textContent = '';
   }
@@ -1910,12 +2010,12 @@ function adminExportReport(){
     ['入库数量', inQty, allInQty],
     ['出库数量', outQty, allOutQty],
     ['预估利润', profit.toFixed(2), allProfit.toFixed(2)],
-    ['员工工资', wageTotal.toFixed(2), allWageTotal.toFixed(2)],
+    ['员工薪资', wageTotal.toFixed(2), allWageTotal.toFixed(2)],
     ['统计时间', now.toLocaleString('zh-CN'), '']
   ];
 
   // ========== 工作表2：批次信息 ==========
-  const batchRows = [['批次号','产品','颜色','入库数量','单价','总成本','员工工资','状态','已出库','报损数量','报损原因','剩余','创建时间','最后出库时间','累计利润']];
+  const batchRows = [['批次号','产品','颜色','入库数量','单价','总成本','员工薪资','状态','已出库','报损数量','报损原因','剩余','创建时间','最后出库时间','实际利润']];
   data.batches.forEach(b => {
     const alreadyOut = (b.deliveries || []).reduce((s, d) => s + d.qty, 0);
     const remaining = b.qty - alreadyOut - (b.lossQty || 0);
@@ -1968,7 +2068,7 @@ function adminExportReport(){
     });
   });
 
-  // ========== 工作表4：工资统计 ==========
+  // ========== 工作表4：薪资明细 ==========
   const totalRows = [['工号','姓名','总金额']];
   const empTotals = {};
   Object.keys(data.records).forEach(empId => {
@@ -2022,7 +2122,7 @@ function adminExportReport(){
 
   const ws4 = XLSX.utils.aoa_to_sheet(totalRows);
   ws4['!cols'] = [{wch:10},{wch:10},{wch:12}];
-  XLSX.utils.book_append_sheet(wb, ws4, '工资统计');
+  XLSX.utils.book_append_sheet(wb, ws4, '薪资明细');
 
   const ws5 = XLSX.utils.aoa_to_sheet(empRows);
   ws5['!cols'] = [{wch:10},{wch:10}];
@@ -2086,8 +2186,8 @@ function adminExportTotal(){
   const ws = XLSX.utils.aoa_to_sheet(rows);
   ws['!cols'] = [{wch:10},{wch:10},{wch:12}];
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '工资统计');
-  XLSX.writeFile(wb, `工资统计.xlsx`);
+  XLSX.utils.book_append_sheet(wb, ws, '薪资明细');
+  XLSX.writeFile(wb, `薪资明细.xlsx`);
 }
 
 // ========== 删除记录 ==========
@@ -2106,7 +2206,7 @@ function delRecord(recKey){
     if(!data.records[empId] || !data.records[empId][date] || !data.records[empId][date][prodKey]) return;
     const recs = data.records[empId][date][prodKey];
     if(!Array.isArray(recs) || idx < 0 || idx >= recs.length) return;
-    // 更新批次工资
+    // 更新批次薪资
     const rec = recs[idx];
     const batch = data.batches.find(b => b.batchCode === rec.batchCode);
     if(batch){
@@ -2155,7 +2255,7 @@ function editRecord(recKey){
       showModal({title:'提示', msg:'请输入有效的数量！', confirmText:'好的'});
       return;
     }
-    // 更新批次工资
+    // 更新批次薪资
     const oldAmt = (rec.n || 0) * (rec.p || 0);
     const newAmt = newQty * (rec.p || 0);
     const diff = newAmt - oldAmt;
