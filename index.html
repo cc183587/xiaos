@@ -75,6 +75,7 @@
   .toast.success{background:#10B981}
   .toast.error{background:#DC2626}
   .toast.info{background:#007AFF}
+  .toast.delete{background:#ff3b30;color:#fff}
 
   /* 批次卡片新样式 */
   .batch-card{background:#F8F9FA;border-radius:8px;padding:16px;margin:10px 0;border:1px solid #E9ECEF;box-shadow:0 2px 8px rgba(0,0,0,.06)}
@@ -249,7 +250,7 @@
 
 <!-- ========== 登录选择 ========== -->
 <div id="loginPage" style="min-height:calc(100vh - 30px);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:20px">
-  <h1 style="margin-bottom:20px">🐱 每日产量登记</h1>
+  <h1 style="margin-bottom:20px">🎀 每日产量登记</h1>
   <div class="box" style="width:100%;max-width:360px">
     <input type="text" id="loginInput" placeholder="请输入工号">
     <button class="btn" onclick="login()">登录</button>
@@ -261,12 +262,11 @@
   <h1 id="empTitle">员工产量登记</h1>
   <div id="empWelcome" style="text-align:center;color:#888;font-size:15px;margin-bottom:10px"></div>
   <div class="box">
-    <div class="title">选择产品</div>
     <select id="prod">
       <option value="">-- 请选择产品 --</option>
     </select>
     <div id="processList"></div>
-    <button class="btn btn-green" onclick="empAdd()">确认登记</button>
+    <button class="btn" onclick="empAdd()">确认登记</button>
   </div>
   <hr class="divider">
   <button class="btn" onclick="empShow()">查询薪资</button>
@@ -363,7 +363,7 @@
         <option value="">-- 全部员工 --</option>
       </select>
       <input type="date" id="recordDate">
-      <button class="btn btn-sm-green" onclick="adminLoadRecord()">查询</button>
+      <button class="btn" style="width:100%;padding:12px 0;font-size:15px" onclick="adminLoadRecord()">查询</button>
     </div>
     <div id="adminRecordList"></div>
   </div>
@@ -392,7 +392,7 @@
         <option value="">-- 选择产品 --</option>
       </select>
       <div id="regProcessList"></div>
-      <button class="btn btn-green" onclick="adminRegister()">确认登记</button>
+      <button class="btn" onclick="adminRegister()">确认登记</button>
     </div>
     <div id="regResult"></div>
   </div>
@@ -411,7 +411,7 @@
       </select>
       <input type="number" id="batchQty" placeholder="入库数量">
       <input type="number" step="0.01" id="batchPrice" placeholder="单价（元/件）">
-      <button class="btn btn-green" onclick="addBatch()">创建批次</button>
+      <button class="btn" onclick="addBatch()">创建批次</button>
       <button class="btn btn-orange" onclick="recalcAllBatchProfit()" style="margin-top:4px;font-size:14px">🔄 重算历史利润（修复旧数据）</button>
     </div>
     <div id="batchList"></div>
@@ -721,6 +721,7 @@ function adminDelEmp(id){
   data.emps = data.emps.filter(e => e.id !== id);
   saveData();
   adminLoadEmpList();
+  showToast('❎ 已删除', 'delete');
 }
 
 function adminLoadRecord(){
@@ -1315,12 +1316,16 @@ function adminLoadProductList(){
           }
         </div>
         <div style="font-size:12px;color:#888;margin:10px 0 8px;font-weight:600;border-top:1px dashed #e0e6ed;padding-top:10px">新增工序</div>
-        <div class="row" style="margin-bottom:8px">
-          <input type="text" id="procName_${k}" placeholder="工序名称" style="flex:1;margin-right:8px">
-          <input type="number" step="0.01" id="procPrice_${k}" placeholder="单价" style="width:100px">
+        <div style="border:1px solid #d0d5dd;border-radius:6px;overflow:hidden;margin-bottom:8px">
+          <div style="display:flex;border-bottom:1px solid #d0d5dd">
+            <input type="text" id="procName_${k}" placeholder="工序名称" style="flex:1;min-width:0;border:none;border-right:1px solid #d0d5dd;border-radius:0;padding:8px 10px;font-size:13px;outline:none;box-sizing:border-box">
+            <input type="number" step="0.01" id="procPrice_${k}" placeholder="单价" style="flex:1;min-width:0;border:none;border-right:1px solid #d0d5dd;border-radius:0;padding:8px 10px;font-size:13px;outline:none;box-sizing:border-box">
+            <input type="text" id="procRemark_${k}" placeholder="备注（选填）" style="flex:1;min-width:0;border:none;border-radius:0;padding:8px 10px;font-size:13px;outline:none;box-sizing:border-box">
+          </div>
+          <div style="text-align:center;padding:6px">
+            <button class="btn" style="margin:0;width:100%;background:#007AFF;color:#fff;border:none;font-size:13px;padding:7px 0;border-radius:4px;cursor:pointer" onclick="addProcess('${k}')">确认添加</button>
+          </div>
         </div>
-        <input type="text" id="procRemark_${k}" placeholder="备注（选填）" style="margin-bottom:8px">
-        <button class="btn" style="margin:0" onclick="addProcess('${k}')">确认添加</button>
       </div>
       <!-- 操作按钮行 -->
       <div class="detail-item">
@@ -1364,7 +1369,7 @@ function delProc(prodKey, idx){
   adminLoadProductList();
   const el = document.getElementById('prodEdit_' + prodKey);
   if(el) el.style.display = 'block';
-  showToast('✅ 工序已删除', 'success');
+  showToast('❎ 已删除', 'delete');
 }
 
 function addProcess(prodKey){
@@ -1384,6 +1389,7 @@ function adminDelProduct(key){
   delete data.products[key];
   saveData();
   adminLoadProductList();
+  showToast('❎ 已删除', 'delete');
 }
 
 function rebuildProdSelect(){
@@ -1484,22 +1490,22 @@ function adminLoadBatchList(){
     if(b.deliveries && b.deliveries.length > 0){
       const rows = b.deliveries.map((d, i) => `
         <tr>
-          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;color:#495057">第${i+1}次</td>
-          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;font-weight:600">${d.qty} 件</td>
-          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;color:#10B981">¥${d.cost.toFixed(2)}</td>
-          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;color:#dc2626">¥${d.profit.toFixed(2)}</td>
-          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;font-size:12px;color:#999">${d.date}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;color:#495057;text-align:center">第${i+1}次</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;font-weight:600;text-align:center">${d.qty} 件</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;color:#10B981;text-align:center">¥${d.cost.toFixed(2)}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;color:#dc2626;text-align:center">¥${d.profit.toFixed(2)}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #f0f0f0;font-size:12px;color:#999;text-align:center">${d.date}</td>
         </tr>`).join('');
       deliveriesHtml = `
         <div style="margin-top:10px">
           <div style="font-size:13px;font-weight:600;color:#495057;margin-bottom:6px">📋 出货记录</div>
           <table style="width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:6px;overflow:hidden;border:1px solid #C7D2FE">
             <thead><tr style="background:#E0E7FF;border-bottom:1px solid #C7D2FE">
-              <th style="padding:8px 10px;text-align:left;font-weight:700;color:#374151;font-size:12px;letter-spacing:.5px">序号</th>
-              <th style="padding:8px 10px;text-align:left;font-weight:700;color:#374151;font-size:12px;letter-spacing:.5px">出货数量</th>
-              <th style="padding:8px 10px;text-align:left;font-weight:700;color:#374151;font-size:12px;letter-spacing:.5px">销售额</th>
-              <th style="padding:8px 10px;text-align:left;font-weight:700;color:#374151;font-size:12px;letter-spacing:.5px">利润</th>
-              <th style="padding:8px 10px;text-align:left;font-weight:700;color:#374151;font-size:12px;letter-spacing:.5px">出货时间</th>
+              <th style="padding:8px 10px;text-align:center;font-weight:700;color:#212529;font-size:12px;letter-spacing:.5px;background:#E0E7FF">序号</th>
+              <th style="padding:8px 10px;text-align:center;font-weight:700;color:#212529;font-size:12px;letter-spacing:.5px;background:#E0E7FF">出货数量</th>
+              <th style="padding:8px 10px;text-align:center;font-weight:700;color:#212529;font-size:12px;letter-spacing:.5px;background:#E0E7FF">销售额</th>
+              <th style="padding:8px 10px;text-align:center;font-weight:700;color:#212529;font-size:12px;letter-spacing:.5px;background:#E0E7FF">利润</th>
+              <th style="padding:8px 10px;text-align:center;font-weight:700;color:#212529;font-size:12px;letter-spacing:.5px;background:#E0E7FF">出货时间</th>
             </tr></thead>
             <tbody>${rows}</tbody>
           </table>
@@ -1848,6 +1854,7 @@ function delBatch(batchId){
   data.batches = data.batches.filter(b => b.id !== batchId);
   saveData();
   adminLoadBatchList();
+  showToast('❎ 已删除', 'delete');
 }
 
 // ==================== 管理员代登记产量 ====================
@@ -1883,7 +1890,7 @@ document.getElementById('regProd').addEventListener('change', function(){
   const list = document.getElementById('regProcessList');
   if(prodInfo){
     list.innerHTML = prodInfo.processes.map(p =>
-      `<div class="item"><span class="name">${p.n}</span><span class="price">${p.p}元/个</span><input type="number" data-n="${p.n}" data-p="${p.p}" placeholder="数量"></div>`
+      `<div class="item"><span class="name">${p.n}</span><span class="price">${p.p}元/件</span><input type="number" data-n="${p.n}" data-p="${p.p}" placeholder="数量"></div>`
     ).join('');
   } else {
     list.innerHTML = '';
@@ -1962,7 +1969,7 @@ document.getElementById('prod').addEventListener('change', function(){
   const prodInfo = data.products[prod];
   const list = document.getElementById('processList');
   if(prodInfo){
-    list.innerHTML = prodInfo.processes.map(p => `<div class="item"><span class="name">${p.n}</span><span class="price">${p.p}元/个</span><input type="number" data-n="${p.n}" data-p="${p.p}" placeholder="数量"></div>`).join('');
+    list.innerHTML = prodInfo.processes.map(p => `<div class="item"><span class="name">${p.n}</span><span class="price">${p.p}元/件</span><input type="number" data-n="${p.n}" data-p="${p.p}" placeholder="数量"></div>`).join('');
   } else {
     list.innerHTML = '';
   }
@@ -2410,7 +2417,7 @@ function delRecord(recKey){
     }
     saveData();
     adminLoadRecord();
-    showModal({title:'提示', msg:'删除成功！', confirmText:'好的'});
+    showToast('❎ 已删除', 'delete');
   });
 }
 
@@ -2451,7 +2458,7 @@ function editRecord(recKey){
     rec.n = newQty;
     saveData();
     adminLoadRecord();
-    showModal({title:'提示', msg:'修改成功！', confirmText:'好的'});
+    showToast('✅ 修改成功', 'success');
   });
 }
 </script>
