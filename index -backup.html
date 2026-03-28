@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>每日产量登记系统</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:Microsoft YaHei,sans-serif}
+  body{background:#f0f2f5;padding:20px;min-height:100vh}
+  h1{font-size:28px;text-align:center;margin:20px 0;color:#ff3b30;font-weight:bold}
+  .container{max-width:1000px;margin:0 auto;background:#fff;padding:20px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+  .filter-box{display:flex;gap:15px;margin-bottom:20px;align-items:center}
+  .filter-box select,.filter-box input{padding:10px;border:1px solid #ccc;border-radius:4px;font-size:14px}
+  .filter-box button{padding:10px 20px;background:#007AFF;color:#fff;border:none;border-radius:4px;cursor:pointer}
+  .filter-box button:hover{background:#0051D5}
+  table{width:100%;border-collapse:collapse;margin-top:20px}
+  th,td{border:1px solid #ddd;padding:10px;text-align:left;font-size:13px}
+  th{background:#007AFF;color:#fff;position:sticky;top:0}
+  tr:nth-child(even){background:#f9f9f9}
+  tr:hover{background:#e3f2fd}
+  .no-data{text-align:center;padding:40px;color:#666;font-size:16px}
+  .process-tag{display:inline-block;padding:3px 8px;background:#e3f2fd;color:#1565C0;border-radius:12px;font-size:11px;margin:2px}
+</style>
+</head>
+<body>
+<h1>🎀 每日产量登记系统</h1>
+
+<div class="container">
+  <div class="filter-box">
+    <select id="empSelect">
+      <option value="">选择员工</option>
+      <option value="ALQP">廖秋鸿 (ALQP)</option><option value="AXX">鑫鑫 (AXX)</option><option value="AYSY">杨思音 (AYSY)</option><option value="ALXQ">雪晴 (ALXQ)</option><option value="">惠 ()</option>
+    </select>
+    <select id="dateSelect">
+      <option value="">选择日期</option>
+    </select>
+    <button onclick="loadRecords()">查询</button>
+  </div>
+  
+  <div id="recordTable"></div>
+</div>
+
+<script>
+// 系统产品单价配置
+const PRODUCT_PRICE_MAP = {
+  "音箱(X3)": {
+    "贴电池": 0.01,
+    "贴喇叭": 0.01,
+    "贴按键": 0.015,
+    "放按键": 0.015,
+    "点喇叭": 0.05,
+    "点板": 0.1,
+    "装电板": 0.02,
+    "组装": 0.1,
+    "锁螺丝": 0.015,
+    "装按键": 0.015,
+    "贴硅胶": 0.015
+  },
+  "头弓耳机(F9)": {
+    "穿线": 0.02,
+    "贴棉+过线": 0.04,
+    "打锁扣": 0.1,
+    "内外匙": 0.08,
+    "反螺丝": 0.05,
+    "打叉": 0.15,
+    "打叉螺丝": 0.05
+  },
+  "蓝牙耳机带灯": {
+    "贴金片": 0.5,
+    "滴喇叭": 0.5,
+    "套棉对": 0.5,
+    "点板": 0.5,
+    "锁电板": 0.5
+  },
+  "粉色耳机": {
+    "穿线": 0.5,
+    "贴棉+过线": 0.5,
+    "打锁扣+反螺丝": 0.5,
+    "内外匙": 0.5,
+    "打叉螺丝": 0.5,
+    "打叉": 0.5
+  }
+};
+
+// 导入的数据
+const EMPLOYEES = {"ALQP": {"id": "ALQP", "name": "廖秋鸿"}, "AXX": {"id": "AXX", "name": "鑫鑫"}, "AYSY": {"id": "AYSY", "name": "杨思音"}, "ALXQ": {"id": "ALXQ", "name": "雪晴"}, "": {"id": "", "name": "惠"}};
+const RECORDS = {"ALQP": {"2026-03-01": {"音箱(X3)": [{"name": "贴电池", "n": 1000.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}]}, "2026-03-07": {"头弓耳机(F9)": [{"name": "穿线", "n": 94.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}, {"name": "贴棉+过线", "n": 94.0, "p": 0.5, "time": "", "batchCode": "", "id": 2}]}, "2026-03-12": {"头弓耳机(F9)": [{"name": "穿线", "n": 200.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}]}, "2026-03-13": {"头弓耳机(F9)": [{"name": "穿线", "n": 200.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}, {"name": "贴棉+过线", "n": 100.0, "p": 0.5, "time": "", "batchCode": "", "id": 2}]}, "2026-03-14": {"头弓耳机(F9)": [{"name": "穿线", "n": 200.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}]}, "2026-03-15": {"头弓耳机(F9)": [{"name": "穿线", "n": 80.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}, {"name": "贴棉+过线", "n": 25.0, "p": 0.5, "time": "", "batchCode": "", "id": 2}]}, "2026-03-05": {"音箱(X3)": [{"name": "装按键", "n": 260.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}]}, "2026-03-08": {"蓝牙耳机带灯": [{"name": "贴金片", "n": 320.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}]}, "2026-03-20": {"头弓耳机(F9)": [{"name": "穿线", "n": 200.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}]}}, "AXX": {"2026-03-07": {"音箱(X3)": [{"name": "点板", "n": 16.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}]}, "2026-03-15": {"头弓耳机(F9)": [{"name": "打锁扣+反螺丝", "n": 91.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}]}}, "AYSY": {"2026-03-10": {"头弓耳机(F9)": [{"name": "贴棉+过线", "n": 56.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}, {"name": "打叉螺丝", "n": 57.0, "p": 0.5, "time": "", "batchCode": "", "id": 2}]}, "2026-03-11": {"头弓耳机(F9)": [{"name": "打锁扣+反螺丝", "n": 27.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}, {"name": "内外匙", "n": 21.0, "p": 0.5, "time": "", "batchCode": "", "id": 2}, {"name": "打锁扣+反螺丝", "n": 3.0, "p": 0.5, "time": "", "batchCode": "", "id": 3}, {"name": "打叉", "n": 45.0, "p": 0.5, "time": "", "batchCode": "", "id": 4}, {"name": "贴棉+过线", "n": 57.0, "p": 0.5, "time": "", "batchCode": "", "id": 5}, {"name": "打锁扣+反螺丝", "n": 37.0, "p": 0.5, "time": "", "batchCode": "", "id": 6}, {"name": "打叉", "n": 116.0, "p": 0.5, "time": "", "batchCode": "", "id": 7}, {"name": "打锁扣+反螺丝", "n": 183.0, "p": 0.5, "time": "", "batchCode": "", "id": 8}]}, "2026-03-18": {"头弓耳机(F9)": [{"name": "打叉", "n": 100.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}]}, "2026-03-04": {"音箱(X3)": [{"name": "贴按键", "n": 55.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}, {"name": "组装", "n": 90.0, "p": 0.5, "time": "", "batchCode": "", "id": 2}, {"name": "锁螺丝", "n": 145.0, "p": 0.5, "time": "", "batchCode": "", "id": 3}]}, "2026-03-19": {"头弓耳机(F9)": [{"name": "打锁扣+反螺丝", "n": 194.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}]}, "2026-03-21": {"头弓耳机(F9)": [{"name": "打叉螺丝", "n": 146.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}, {"name": "打叉", "n": 252.0, "p": 0.5, "time": "", "batchCode": "", "id": 2}]}, "2026-03-24": {"头弓耳机(F9)": [{"name": "打叉螺丝", "n": 73.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}, {"name": "打叉", "n": 71.0, "p": 0.5, "time": "", "batchCode": "", "id": 2}]}}, "ALXQ": {"2026-03-10": {"头弓耳机(F9)": [{"name": "内外匙", "n": 30.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}, {"name": "打叉", "n": 26.0, "p": 0.5, "time": "", "batchCode": "", "id": 2}]}, "2026-03-11": {"头弓耳机(F9)": [{"name": "打锁扣+反螺丝", "n": 15.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}, {"name": "内外匙", "n": 31.0, "p": 0.5, "time": "", "batchCode": "", "id": 2}]}, "2026-03-13": {"头弓耳机(F9)": [{"name": "贴棉+过线", "n": 93.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}]}, "2026-03-15": {"头弓耳机(F9)": [{"name": "内外匙", "n": 200.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}, {"name": "打叉螺丝", "n": 131.0, "p": 0.5, "time": "", "batchCode": "", "id": 2}, {"name": "打叉", "n": 16.0, "p": 0.5, "time": "", "batchCode": "", "id": 3}, {"name": "内外匙", "n": 82.0, "p": 0.5, "time": "", "batchCode": "", "id": 4}, {"name": "打叉螺丝", "n": 71.0, "p": 0.5, "time": "", "batchCode": "", "id": 5}, {"name": "打叉", "n": 20.0, "p": 0.5, "time": "", "batchCode": "", "id": 6}]}, "2026-03-17": {"头弓耳机(F9)": [{"name": "打锁扣+反螺丝", "n": 179.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}]}, "2026-03-18": {"头弓耳机(F9)": [{"name": "内外匙", "n": 66.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}, {"name": "打叉", "n": 51.0, "p": 0.5, "time": "", "batchCode": "", "id": 2}]}, "2026-03-04": {"音箱(X3)": [{"name": "装按键", "n": 55.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}, {"name": "组装", "n": 80.0, "p": 0.5, "time": "", "batchCode": "", "id": 2}]}, "2026-03-19": {"头弓耳机(F9)": [{"name": "打锁扣+反螺丝", "n": 114.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}]}, "2026-03-21": {"头弓耳机(F9)": [{"name": "打叉螺丝", "n": 38.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}, {"name": "打叉", "n": 234.0, "p": 0.5, "time": "", "batchCode": "", "id": 2}]}, "2026-03-24": {"头弓耳机(F9)": [{"name": "打叉螺丝", "n": 71.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}, {"name": "打叉", "n": 69.0, "p": 0.5, "time": "", "batchCode": "", "id": 2}]}}, "": {"2026-03-13": {"头弓耳机(F9)": [{"name": "打锁扣+反螺丝", "n": 10.0, "p": 0.5, "time": "", "batchCode": "", "id": 1}, {"name": "打叉", "n": 160.0, "p": 0.5, "time": "", "batchCode": "", "id": 2}]}}};
+
+// 获取所有日期
+const allDates = [...new Set(Object.values(RECORDS).flatMap(empRecords => 
+  Object.keys(empRecords)
+))].sort().reverse();
+
+// 填充日期选择
+const dateSelect = document.getElementById('dateSelect');
+allDates.forEach(date => {
+  const option = document.createElement('option');
+  option.value = date;
+  option.textContent = date;
+  dateSelect.appendChild(option);
+});
+
+// 加载记录
+function loadRecords() {
+  const empId = document.getElementById('empSelect').value;
+  const date = document.getElementById('dateSelect').value;
+
+  console.log('筛选条件:', {empId, date});
+  console.log('员工数:', Object.keys(RECORDS).length);
+  console.log('记录:', RECORDS);
+
+  let filteredRecords = [];
+  
+  Object.keys(RECORDS).forEach(eid => {
+    if(empId && eid !== empId) return;
+    
+    Object.keys(RECORDS[eid]).forEach(d => {
+      if(date && d !== date) return;
+      
+      Object.keys(RECORDS[eid][d]).forEach(prod => {
+        RECORDS[eid][d][prod].forEach(rec => {
+          const empName = EMPLOYEES[eid]?.name || eid;
+          // 使用系统单价，如果没有则使用 Excel 中的单价
+          const systemPrice = PRODUCT_PRICE_MAP[prod]?.[rec.name] || rec.p;
+          filteredRecords.push({
+            工号: eid,
+            姓名: empName,
+            日期: d,
+            产品: prod,
+            工序: rec.name,
+            数量: rec.n,
+            单价: systemPrice
+          });
+        });
+      });
+    });
+  });
+
+  console.log('过滤后记录数:', filteredRecords.length);
+  renderTable(filteredRecords);
+}
+
+// 渲染表格
+function renderTable(records) {
+  const tableDiv = document.getElementById('recordTable');
+  
+  if(records.length === 0) {
+    tableDiv.innerHTML = '<div class="no-data">没有找到相关记录</div>';
+    return;
+  }
+  
+  let html = '<table><thead><tr><th>工号</th><th>姓名</th><th>日期</th><th>产品</th><th>工序</th><th>数量</th><th>单价</th><th>金额</th></tr></thead><tbody>';
+  
+  records.forEach(rec => {
+    html += `<tr>
+      <td>${rec.工号}</td>
+      <td>${rec.姓名}</td>
+      <td>${rec.日期}</td>
+      <td>${rec.产品}</td>
+      <td><span class="process-tag">${rec.工序}</span></td>
+      <td>${rec.数量}</td>
+      <td>¥${rec.单价.toFixed(2)}</td>
+      <td>¥${(rec.数量 * rec.单价).toFixed(2)}</td>
+    </tr>`;
+  });
+  
+  html += '</tbody></table>';
+  tableDiv.innerHTML = html;
+}
+
+// 页面加载后自动显示所有记录
+window.onload = function() {
+  loadRecords();
+};
+</script>
+</body>
+</html>

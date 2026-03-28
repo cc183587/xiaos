@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>工厂产量薪资管理系统</title>
-<!-- SheetJS 用于导出Excel -->
-<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<title>每日产量登记系统</title>
+<!-- SheetJS 用于导出Excel（本地文件，避免CDN慢） -->
+<script src="/xlsx.local.js"></script>
 <style>
   *{margin:0;padding:0;box-sizing:border-box;font-family:Microsoft YaHei,sans-serif}
   body{background:#f0f2f5;padding:15px;max-width:640px;margin:0 auto;min-height:100vh}
@@ -97,6 +97,31 @@
   /* 隐藏滚动条但保持功能 */
   #adminNav::-webkit-scrollbar {
     height: 4px;
+  }
+  
+  /* 退出按钮样式 */
+  .logout-btn {
+    position: fixed;
+    top: 10px;
+    right: 15px;
+    z-index: 300;
+    background: #ff3b30;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    display: none; /* 默认隐藏，登录后显示 */
+  }
+  .logout-btn:hover {
+    background: #e6392b;
+  }
+  .logout-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
   }
   #adminNav::-webkit-scrollbar-track {
     background: #f1f1f1;
@@ -588,6 +613,9 @@ async function checkAndRestoreSession() {
     // 加载公司数据
     await loadData(currentCompany);
     
+    // 获取当前激活的tab，默认为'summary'
+    const currentTab = session.currentTab || 'summary';
+    
     // 根据角色显示对应页面
     if (session.role === 'admin') {
       document.getElementById('loginPage').style.display = 'none';
@@ -595,7 +623,10 @@ async function checkAndRestoreSession() {
       document.getElementById('adminBar').style.display = 'block';
       document.querySelectorAll('.logout-float').forEach(el => el.style.display = '');
       document.getElementById('adminTitle').textContent = COMPANIES[currentCompany]?.name + ' 管理员面板';
-      showAdmin('summary');
+      // 显示退出按钮
+      document.querySelector('.logout-btn').style.display = 'block';
+      // 跳转到之前保存的tab
+      showAdmin(currentTab);
       setTimeout(adjustAdminPadding, 50);
       return true;
     } else if (session.role === 'employee') {
@@ -603,6 +634,8 @@ async function checkAndRestoreSession() {
       document.getElementById('empPage').style.display = 'block';
       document.querySelectorAll('.logout-float').forEach(el => el.style.display = '');
       document.getElementById('empTitle').textContent = '员工产量登记';
+      // 显示退出按钮
+      document.querySelector('.logout-btn').style.display = 'block';
       rebuildProdSelect();
       document.getElementById('empResult').innerHTML = '';
       const greeting = getGreeting();
@@ -782,6 +815,8 @@ async function login(){
     document.getElementById('adminBar').style.display = 'block';
     document.querySelectorAll('.logout-float').forEach(el => el.style.display = '');
     document.getElementById('adminTitle').textContent = result.companyName + ' 管理员面板';
+    // 显示退出按钮
+    document.querySelector('.logout-btn').style.display = 'block';
     showAdmin('summary');
     setTimeout(adjustAdminPadding, 50);
     showToast(`登录成功！\n祝老板发大财！`, 'success');
@@ -804,6 +839,8 @@ async function login(){
     document.getElementById('empWelcome').textContent = result.empName
       ? `${greeting} ${result.empName} 同学` : greeting;
     showToast(`登录成功`, 'success');
+    // 显示退出按钮
+    document.querySelector('.logout-btn').style.display = 'block';
     
     // 保存登录状态
     saveLoginSession(result.empId, result.companyCode, 'employee');
@@ -823,6 +860,8 @@ function logout(){
   document.getElementById('empPage').style.display = 'none';
   document.getElementById('loginInput').value = '';
   document.querySelectorAll('.logout-float').forEach(el => el.style.display = 'none');
+  // 隐藏退出按钮
+  document.querySelector('.logout-btn').style.display = 'none';
   
   // 清除登录状态
   clearLoginSession();
@@ -2540,8 +2579,17 @@ async function editRecord(recId){
     document.getElementById('empPage').style.display = 'none';
     document.getElementById('adminPage').style.display = 'none';
     document.getElementById('adminBar').style.display = 'none';
+    // 隐藏退出按钮
+    document.querySelector('.logout-btn').style.display = 'none';
+  } else {
+    // 恢复登录状态后显示退出按钮
+    document.querySelector('.logout-btn').style.display = 'block';
   }
 })();
 </script>
+
+<!-- 退出按钮 -->
+<button class="logout-btn" onclick="logout()">退出</button>
+
 </body>
 </html>

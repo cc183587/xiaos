@@ -66,7 +66,9 @@ app.post('/api/companies/:company/import', (req, res) => {
   }
   const db = getDb();
 
-  const doImport = db.transaction(() => {
+  try {
+    db.exec('BEGIN');
+
     // 清空该公司数据（保留公司记录本身）
     db.prepare(`DELETE FROM records         WHERE company_code=?`).run(company);
     db.prepare(`DELETE FROM batch_deliveries WHERE batch_id IN (SELECT id FROM batches WHERE company_code=?)`).run(company);
@@ -99,12 +101,11 @@ app.post('/api/companies/:company/import', (req, res) => {
     // 恢复产量记录
     const insRec = db.prepare(`INSERT INTO records(id,company_code,emp_id,date,prod_key,process_name,qty,price,time,reg_id,batch_code) VALUES(?,?,?,?,?,?,?,?,?,?,?)`);
     (backup.records||[]).forEach(r => insRec.run(r.id,company,r.emp_id,r.date,r.prod_key,r.process_name,r.qty,r.price,r.time||'',r.reg_id||0,r.batch_code||null));
-  });
 
-  try {
-    doImport();
+    db.exec('COMMIT');
     res.json({ ok: true });
   } catch(e) {
+    db.exec('ROLLBACK');
     res.status(500).json({ error: e.message });
   }
 });

@@ -62,12 +62,16 @@ router.post('/', (req, res) => {
   `);
 
   const now = new Date().toTimeString().split(' ')[0];
-  const insertMany = db.transaction((procs) => {
-    for (const p of procs) {
+  db.exec('BEGIN');
+  try {
+    for (const p of processes) {
       insert.run(company, empId, date, prodKey, p.name, p.qty, p.price, now, finalRegId, batchCode || null);
     }
-  });
-  insertMany(processes);
+    db.exec('COMMIT');
+  } catch(err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
 
   // 更新批次薪资
   if (batchCode) {
