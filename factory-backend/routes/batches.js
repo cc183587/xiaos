@@ -13,6 +13,16 @@ router.get('/', (req, res) => {
     `SELECT * FROM batches WHERE company_code=? ORDER BY create_time DESC`
   ).all(company);
 
+  // 排序：入库中(in)和部分出库(partial)在前，已出库(out)和已结束(closed)在后
+  const statusOrder = { 'in': 0, 'partial': 1, 'out': 2, 'closed': 3 };
+  batches.sort((a, b) => {
+    const orderA = statusOrder[a.status] ?? 4;
+    const orderB = statusOrder[b.status] ?? 4;
+    if (orderA !== orderB) return orderA - orderB;
+    // 同状态按创建时间倒序（最新的在前）
+    return new Date(b.create_time) - new Date(a.create_time);
+  });
+
   const result = batches.map(b => {
     const deliveries = db.prepare(
       `SELECT * FROM batch_deliveries WHERE batch_id=? ORDER BY id`
@@ -58,17 +68,19 @@ router.post('/', (req, res) => {
 
   const db = getDb();
 
-  // 生成批次编号
+  // 生成批次编号：YYYYMMDD-序号（序号按月累加）
   const now = new Date();
   const ymd = now.getFullYear().toString()
     + String(now.getMonth() + 1).padStart(2, '0')
     + String(now.getDate()).padStart(2, '0');
+  const ym = now.getFullYear().toString()
+    + String(now.getMonth() + 1).padStart(2, '0');
 
   const seqRow = db.prepare(
     `INSERT INTO batch_seq(company_code, ymd, seq) VALUES (?, ?, 1)
      ON CONFLICT(company_code, ymd) DO UPDATE SET seq = seq + 1
      RETURNING seq`
-  ).get(company, ymd);
+  ).get(company, ym);
   const seq = String(seqRow.seq).padStart(2, '0');
   const batchCode = ymd + '-' + seq;
   const batchId = Date.now().toString();
@@ -120,7 +132,9 @@ router.post('/:batchId/out', (req, res) => {
     wageShare = Math.max(0, (batch.wage_total || 0) - alreadySharedWage);
   }
   const profit = cost - wageShare;
-  const date = new Date().toLocaleString('zh-CN');
+  // 使用 ISO 格式 YYYY-MM-DD HH:MM:SS，确保 summary.js 中的 substr(d.date,1,10) 能正确匹配
+  const _now = new Date();
+  const date = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}-${String(_now.getDate()).padStart(2,'0')} ${String(_now.getHours()).padStart(2,'0')}:${String(_now.getMinutes()).padStart(2,'0')}:${String(_now.getSeconds()).padStart(2,'0')}`;
 
   const insertDelivery = db.prepare(`
     INSERT INTO batch_deliveries(batch_id, date, qty, cost, wage_share, profit)
@@ -154,7 +168,8 @@ router.post('/:batchId/close', (req, res) => {
 
   const deliveries = db.prepare(`SELECT * FROM batch_deliveries WHERE batch_id=?`).all(batchId);
   const finalProfit = deliveries.reduce((s, d) => s + d.profit, 0);
-  const closedTime = new Date().toLocaleString('zh-CN');
+  const _cn = new Date();
+  const closedTime = `${_cn.getFullYear()}-${String(_cn.getMonth()+1).padStart(2,'0')}-${String(_cn.getDate()).padStart(2,'0')} ${String(_cn.getHours()).padStart(2,'0')}:${String(_cn.getMinutes()).padStart(2,'0')}:${String(_cn.getSeconds()).padStart(2,'0')}`;
   const lossReason = lossQty > 0 ? (reason + (remark ? '：' + remark : '')) : (remark || '');
 
   db.prepare(`

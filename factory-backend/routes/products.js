@@ -8,7 +8,7 @@ const router = Router({ mergeParams: true });
 router.get('/', (req, res) => {
   const { company } = req.params;
   const db = getDb();
-  const prods = db.prepare(`SELECT prod_key, name FROM products WHERE company_code=? ORDER BY prod_key`).all(company);
+  const prods = db.prepare(`SELECT prod_key, name, hidden FROM products WHERE company_code=? ORDER BY prod_key`).all(company);
   const result = {};
   for (const p of prods) {
     const procs = db.prepare(
@@ -16,6 +16,7 @@ router.get('/', (req, res) => {
     ).all(p.prod_key, company);
     result[p.prod_key] = {
       name: p.name,
+      hidden: p.hidden === 1,
       processes: procs.map(pr => {
         const obj = { id: pr.id, n: pr.name, p: pr.price };
         if (pr.remark) obj.r = pr.remark;
@@ -47,6 +48,17 @@ router.put('/:key', (req, res) => {
   const db = getDb();
   db.prepare(`UPDATE products SET name=? WHERE prod_key=? AND company_code=?`).run(name, key, company);
   res.json({ ok: true });
+});
+
+// ── 切换产品隐藏状态 ──────────────────────────────────────────
+router.post('/:key/toggle-hidden', (req, res) => {
+  const { company, key } = req.params;
+  const db = getDb();
+  const prod = db.prepare(`SELECT hidden FROM products WHERE prod_key=? AND company_code=?`).get(key, company);
+  if (!prod) return res.status(404).json({ error: '产品不存在' });
+  const newHidden = prod.hidden === 1 ? 0 : 1;
+  db.prepare(`UPDATE products SET hidden=? WHERE prod_key=? AND company_code=?`).run(newHidden, key, company);
+  res.json({ ok: true, hidden: newHidden === 1 });
 });
 
 // ── 删除产品 ──────────────────────────────────────────────────

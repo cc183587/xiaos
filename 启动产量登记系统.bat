@@ -1,49 +1,22 @@
 @echo off
-chcp 65001 >nul
-echo ========================================
-echo    工厂产量工资管理系统 - 一键启动
-echo ========================================
-echo.
+chcp 65001 >nul 2>&1
+title 产量登记系统启动器
 
-:: 获取本机局域网IP
-for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /i "IPv4"') do (
-    set IP=%%a
-)
+REM === 先杀掉旧的 cpolar 进程，避免多实例冲突 ===
+taskkill /f /im cpolar.exe >nul 2>&1
+timeout /t 2 /nobreak >nul
 
-echo [1/3] 启动后端服务...
-cd factory-backend
-start "Factory Backend" cmd /k "node server.js"
-cd ..
+REM === 启动后端（VBS隐藏窗口） ===
+cscript //nologo "%~dp0启动后端.vbs"
 
-timeout /t 2 >nul
+REM === 启动 Cpolar 隧道（覆盖模式写日志，确保每次都是最新地址） ===
+set CPOLAR_OUT=%TEMP%\cpolar_out.txt
+start "" /min cmd /c "cpolar http 3001 -log stdout > %CPOLAR_OUT% 2>&1"
 
-echo [2/3] 启动内网穿透...
-where cpolar >nul 2>&1
-if %errorlevel% equ 0 (
-    start "Cpolar内网穿透" cmd /k "cpolar http 3001"
-    echo [信息] Cpolar 已启动，请查看 Cpolar 窗口获取外网地址
-) else (
-    echo [警告] 未检测到 Cpolar，仅启动本地和局域网访问
-    echo [提示] 请访问 https://www.cpolar.com/ 安装 Cpolar 并配置 authtoken
-)
+REM === 等待隧道建立并获取外网地址 ===
+powershell -ExecutionPolicy Bypass -File "%~dp0get_cpolar_url.ps1"
 
-timeout /t 2 >nul
+REM === 打开浏览器 ===
+start "" "http://localhost:3001/index.html"
 
-echo [3/3] 打开前端页面...
-start http://localhost:3001/index.html
-
-echo.
-echo ======================= 启动完成 ======================
-echo   本机访问:   http://localhost:3001/index.html
-echo   局域网访问: http://%IP%:3001/index.html
-if %errorlevel% equ 0 (
-    echo   外网访问:   请查看 Cpolar 窗口
-)
-echo.
-echo  [提示] 手机访问请确保手机和电脑连接同一 WiFi
-echo  [提示] 外网访问需要安装 Cpolar 并配置 authtoken
-echo  [提示] 关闭窗口 = 关闭服务器
-echo =========================================================
-echo.
-
-pause
+exit

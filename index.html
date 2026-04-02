@@ -4,6 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>每日产量登记系统</title>
+
+<!-- PWA Meta Tags -->
+<meta name="theme-color" content="#ff3b30">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="产量登记">
+<meta name="application-name" content="产量登记">
+<meta name="msapplication-TileColor" content="#ff3b30">
+<meta name="msapplication-config" content="/icons/browserconfig.xml">
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+
+<!-- Apple Touch Icons -->
+<link rel="apple-touch-icon" sizes="152x152" href="/icons/apple-icon-152x152.png">
+<link rel="apple-touch-icon" sizes="167x167" href="/icons/apple-icon-167x167.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-icon-180x180.png">
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="/manifest.json">
+
 <!-- SheetJS 用于导出Excel（本地文件，避免CDN慢） -->
 <script src="/xlsx.local.js"></script>
 <style>
@@ -337,6 +359,33 @@
   .salary-summary-card .sum-footer > div{flex:1;min-width:80px;text-align:center;padding:0 4px}
   .sum-footer-id{color:#212529;font-weight:600}
   .sum-footer-amt{color:#DC2626;font-weight:700;font-size:16px}
+
+/* 登录加载动画 */
+.login-spinner {
+  display: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.login-loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.login-loading .login-spinner {
+  display: inline-block;
+}
+
 </style>
 </head>
 <body>
@@ -348,7 +397,10 @@
   </div>
   <div class="box" style="width:100%;max-width:360px;text-align:center">
     <input type="text" id="loginInput" placeholder="请输入工号">
-    <button class="btn" onclick="login()">登录</button>
+    <button class="btn" onclick="login()">
+      <span id="loginBtnText">登录</span>
+      <span id="loginSpinner" class="login-spinner"></span>
+    </button>
   </div>
 </div>
 
@@ -602,6 +654,13 @@ async function checkAndRestoreSession() {
     
     // 检查会话是否过期
     if (Date.now() > session.expires) {
+      clearLoginSession();
+      return false;
+    }
+    
+    // 校验 company 字段有效性（必须是已知公司代码）
+    const validCompanies = Object.keys(COMPANIES);
+    if (!session.company || !validCompanies.includes(session.company)) {
       clearLoginSession();
       return false;
     }
@@ -914,7 +973,7 @@ function showAdmin(tab){
     data.emps.forEach(e => {
       empSel.innerHTML += `<option value="${e.id}">${e.id} ${e.name || ''}</option>`;
     });
-    document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
+    // 日期默认为空（查询全部），不自动填充今天
     adminLoadRecord();
   }
   if(tab === 'total') adminLoadTotal();
@@ -1051,8 +1110,12 @@ function adminLoadRecord(){
 
   // 按日期降序、时间降序排序（最新的在最上面）
   allRecords.sort((a, b) => {
+    // 先按日期降序
     if(a.date !== b.date) return b.date.localeCompare(a.date);
-    return (b.time || '').localeCompare(a.time || '');
+    // 同日期按时间降序，无时间的排在最后
+    const timeA = a.time || '00:00';
+    const timeB = b.time || '00:00';
+    return timeB.localeCompare(timeA);
   });
 
   // 渲染排序后的记录
@@ -1188,13 +1251,30 @@ function switchSvTab(tab){
   });
 }
 
+// 凌晨5点后才算新的一天（北京时间，仅用于总览统计）
+function getWorkDate(dateObj){
+  const now = dateObj || new Date();
+  // 如果是凌晨0-4点，算作前一天
+  if(now.getHours() < 5){
+    now.setDate(now.getDate() - 1);
+  }
+  // 使用本地时区构建 YYYY-MM-DD
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+// 正常日期：凌晨00:00就是新的一天（用于记录列表、产量登记等）
+function getNormalDate(dateObj){
+  const now = dateObj || new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
 async function adminLoadSummary(){
   const now = new Date();
   const currentYear  = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
   let lastYear = currentYear, lastMonth = currentMonth - 1;
   if(lastMonth < 1){ lastMonth = 12; lastYear--; }
-  const todayStr = now.toISOString().split('T')[0];
+  const todayStr = getWorkDate(now); // 总览用凌晨5点逻辑
 
   let s;
   try {
@@ -1301,7 +1381,7 @@ async function adminLoadSummary(){
 
 function adminLoadTotal(){
   const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
+  const todayStr = getNormalDate(now); // 工资统计用正常日期
   const thisMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
   let html = `<div class="salary-summary-card">
@@ -1396,6 +1476,8 @@ async function adminAddProduct(){
 function adminLoadProductList(){
   const html = Object.keys(data.products).map(k => {
     const prod = data.products[k];
+    const isHidden = !!prod.hidden;
+    const cardOpacity = isHidden ? 'opacity:0.55;' : '';
     const procRows = prod.processes.map(p => `
       <div class="detail-item">
         <div class="detail-left">
@@ -1409,11 +1491,17 @@ function adminLoadProductList(){
         <div class="detail-right"></div>
       </div>`;
     return `
-    <div class="process-card">
+    <div class="process-card" style="${cardOpacity}">
       <!-- 产品名称行 -->
       <div class="detail-item">
-        <div class="detail-left" style="font-size:16px;font-weight:600;color:#212529">${prod.name}</div>
-        <div class="detail-right"></div>
+        <div class="detail-left" style="font-size:16px;font-weight:600;color:${isHidden ? '#aaa' : '#212529'};display:flex;align-items:center;gap:8px">
+          ${prod.name}
+          ${isHidden ? '<span style="font-size:11px;font-weight:400;background:#f0f0f0;color:#999;padding:2px 7px;border-radius:10px;border:1px solid #e0e0e0">已隐藏</span>' : ''}
+        </div>
+        <div class="detail-right" style="display:flex;align-items:center;gap:6px">
+          <span class="proc-opt-btn" style="${isHidden ? 'background:#E6F9EE;color:#22c55e' : 'background:#FFF3CD;color:#856404'}" onclick="toggleProductHidden('${k}')">${isHidden ? '👁 显示' : '🚫 隐藏'}</span>
+          <span class="proc-opt-btn" style="background:#E0E7FF;color:#3B82F6" onclick="editProductName('${k}')">编辑</span>
+        </div>
       </div>
       <!-- 工序列表 -->
       ${procRows}
@@ -1457,6 +1545,18 @@ function adminLoadProductList(){
     </div>`;
   }).join('');
   document.getElementById('adminProductList').innerHTML = html || '<p style="color:#999;text-align:center;padding:20px">暂无产品</p>';
+}
+
+async function toggleProductHidden(key){
+  try {
+    const res = await apiFetch(`/api/companies/${currentCompany}/products/${key}/toggle-hidden`, { method: 'POST' });
+    data.products[key].hidden = res.hidden;
+    adminLoadProductList();
+    rebuildProdSelect();
+    showToast(res.hidden ? '已隐藏，下拉框不再显示此产品' : '✅ 已恢复显示', res.hidden ? 'info' : 'success');
+  } catch(e) {
+    showToast('操作失败：' + e.message, 'error');
+  }
 }
 
 function toggleEditProcess(prodKey){
@@ -1528,6 +1628,36 @@ async function addProcess(prodKey){
   }
 }
 
+async function editProductName(key){
+  const currentName = data.products[key]?.name || '';
+  const newName = await showModal({
+    title: '编辑产品名称',
+    msg: '',
+    hasInput: true,
+    inputDefault: currentName,
+    confirmText: '保存'
+  });
+  if(!newName || newName.trim() === ''){
+    showToast('请输入产品名称', 'error');
+    return;
+  }
+  if(newName.trim() === currentName.trim()){
+    return; // 名称没变，不做任何操作
+  }
+  try {
+    await apiFetch(`/api/companies/${currentCompany}/products/${key}`, {
+      method: 'PUT',
+      body: { name: newName.trim() }
+    });
+    data.products[key].name = newName.trim();
+    adminLoadProductList();
+    rebuildProdSelect(); // 更新所有下拉框
+    showToast('✅ 产品名称已更新', 'success');
+  } catch(e){
+    showToast('更新失败：' + e.message, 'error');
+  }
+}
+
 async function adminDelProduct(key){
   if(!confirm('确定删除产品？')) return;
   try {
@@ -1548,6 +1678,7 @@ function rebuildProdSelect(){
   batchSel.innerHTML = '<option value="">-- 请选择产品 --</option>';
   regSel.innerHTML = '<option value="">-- 请选择产品 --</option>';
   Object.keys(data.products).forEach(k => {
+    if(data.products[k].hidden) return; // 隐藏的产品不出现在下拉框
     const opt = `<option value="${k}">${data.products[k].name}</option>`;
     sel.innerHTML += opt;
     batchSel.innerHTML += opt;
@@ -2033,7 +2164,7 @@ async function adminRegister(){
     .sort((a, b) => a.createTime.localeCompare(b.createTime))[0];
   if(!batch){ showModal({title:'提示', msg:'请找老板入库，谢谢！'}); return; }
 
-  const date = new Date().toISOString().split('T')[0];
+  const date = getNormalDate(new Date());
   try {
     const result = await apiFetch(`/api/companies/${currentCompany}/records`, {
       method: 'POST', body: { empId, prodKey, date, processes, batchCode: batch.batchCode }
@@ -2104,7 +2235,7 @@ async function empAdd(){
     .sort((a, b) => a.createTime.localeCompare(b.createTime))[0];
   if(!batch){ showModal({title:'提示', msg:'请找老板入库，谢谢！'}); return; }
 
-  const date = new Date().toISOString().split('T')[0];
+  const date = getNormalDate(new Date());
   try {
     const result = await apiFetch(`/api/companies/${currentCompany}/records`, {
       method: 'POST', body: { empId: currentUser, prodKey: prod, date, processes, batchCode: batch.batchCode }
@@ -2590,6 +2721,21 @@ async function editRecord(recId){
 
 <!-- 退出按钮 -->
 <button class="logout-btn" onclick="logout()">退出</button>
+
+<!-- Service Worker 注册 -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(registration => {
+        console.log('ServiceWorker 注册成功:', registration);
+      })
+      .catch(error => {
+        console.log('ServiceWorker 注册失败:', error);
+      });
+  });
+}
+</script>
 
 </body>
 </html>

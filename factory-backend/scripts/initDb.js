@@ -110,6 +110,13 @@ export function initDb() {
     // 列已存在，忽略
   }
 
+  // 数据库迁移：如果 products 表没有 hidden 列则添加
+  try {
+    db.exec(`ALTER TABLE products ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0`);
+  } catch(e) {
+    // 列已存在，忽略
+  }
+
   // 默认公司
   const insertCompany = db.prepare(
     `INSERT OR IGNORE INTO companies(code,name,prefix,admin_pwd) VALUES(?,?,?,?)`
