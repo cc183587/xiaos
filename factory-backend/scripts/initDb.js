@@ -101,6 +101,13 @@ export function initDb() {
       company_code TEXT PRIMARY KEY,
       seq          INTEGER NOT NULL DEFAULT 0
     );
+
+    -- 系统设置表（存储 Server酱 SendKey 等配置）
+    CREATE TABLE IF NOT EXISTS settings (
+      company_code    TEXT PRIMARY KEY,
+      serverchan_key  TEXT,
+      updated_at      TEXT
+    );
   `);
 
   // 数据库迁移：如果 processes 表没有 remark 列则添加

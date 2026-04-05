@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getDb } from '../config/database.js';
+import { sendServerChanMessage, buildRecordMessage } from '../services/serverchan.js';
 
 const router = Router({ mergeParams: true });
 // 路由前缀：/api/companies/:company/records
@@ -80,6 +81,43 @@ router.post('/', (req, res) => {
     if (batch) {
       db.prepare(`UPDATE batches SET wage_total = wage_total + ? WHERE id=?`).run(totalWage, batch.id);
     }
+  }
+
+  // 发送 Server酱 微信推送提醒
+  try {
+    const settings = db.prepare(`SELECT serverchan_key FROM settings WHERE company_code=?`).get(company);
+    if (settings?.serverchan_key) {
+      const emp = db.prepare(`SELECT name FROM employees WHERE id=? AND company_code=?`).get(empId, company);
+      const prod = db.prepare(`SELECT name FROM products WHERE key=? AND company_code=?`).get(prodKey, company);
+      
+      const messageContent = buildRecordMessage({
+        empName: emp?.name || empId,
+        empId,
+        date,
+        time: now,
+        prodName: prod?.name || prodKey,
+        batchCode,
+        processes
+      });
+
+      // 异步发送推送，不阻塞响应
+      sendServerChanMessage({
+        sendKey: settings.serverchan_key,
+        title: `【${emp?.name || empId}】产量登记`,
+        content: messageContent
+      }).then(result => {
+        if (result.success) {
+          console.log(`[Server酱] 推送成功: ${empId} ${date}`);
+        } else {
+          console.error(`[Server酱] 推送失败: ${result.message}`);
+        }
+      }).catch(err => {
+        console.error('[Server酱] 推送异常:', err);
+      });
+    }
+  } catch (pushErr) {
+    console.error('[Server酱] 推送处理错误:', pushErr);
+    // 推送失败不影响主流程
   }
 
   res.json({ ok: true, regId: finalRegId, time: now });

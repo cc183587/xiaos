@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>每日产量登记系统</title>
 
 <!-- PWA Meta Tags -->
@@ -435,6 +438,7 @@
     <button onclick="showAdmin('register')" data-tab="register">产量登记</button>
     <button onclick="showAdmin('record')" data-tab="record">查询记录</button>
     <button onclick="showAdmin('total')" data-tab="total">薪资明细</button>
+    <button onclick="showAdmin('settings')" data-tab="settings">系统设置</button>
   </div>
 </div>
 
@@ -518,6 +522,42 @@
   <!-- 薪资明细 -->
   <div id="adminTotal" style="display:none">
     <div id="adminTotalList"></div>
+  </div>
+
+  <!-- 系统设置 -->
+  <div id="adminSettings" style="display:none">
+    <div class="box" style="max-width:480px;margin:0 auto">
+      <h3 style="margin:0 0 15px 0;color:#333">🔔 微信推送设置 (Server酱)</h3>
+      <p style="color:#666;font-size:13px;margin-bottom:15px">
+        配置后，员工每次登记产量将自动发送微信提醒。<br>
+        获取 SendKey：<a href="https://sct.ftqq.com" target="_blank" style="color:#1890ff">sct.ftqq.com</a>
+      </p>
+      
+      <div style="margin-bottom:15px">
+        <label style="display:block;font-size:13px;color:#666;margin-bottom:5px">Server酱 SendKey</label>
+        <input type="text" id="serverchanKey" placeholder="请输入您的 Server酱 SendKey" style="width:100%;box-sizing:border-box">
+        <p style="font-size:12px;color:#999;margin-top:5px">格式如：SCTxxxxxxxxxxxxxxxx</p>
+      </div>
+      
+      <div style="display:flex;gap:10px">
+        <button class="btn" onclick="saveServerChanSettings()" style="flex:1">保存设置</button>
+        <button class="btn" onclick="testServerChanSettings()" style="flex:1;background:#52c41a">测试推送</button>
+      </div>
+      
+      <div id="serverchanStatus" style="margin-top:15px;font-size:13px"></div>
+    </div>
+    
+    <div class="box" style="max-width:480px;margin:15px auto 0">
+      <h4 style="margin:0 0 10px 0;color:#333">📖 使用说明</h4>
+      <ol style="font-size:13px;color:#666;line-height:1.8;padding-left:18px;margin:0">
+        <li>访问 <a href="https://sct.ftqq.com" target="_blank" style="color:#1890ff">sct.ftqq.com</a> 登录账号</li>
+        <li>关注 "方糖气球" 微信公众号</li>
+        <li>在官网获取您的 SendKey</li>
+        <li>将 SendKey 填入上方输入框并保存</li>
+        <li>点击"测试推送"验证配置是否正确</li>
+        <li>配置成功后，员工登记产量时将自动收到微信提醒</li>
+      </ol>
+    </div>
   </div>
 
   <!-- 产品管理 -->
@@ -929,7 +969,7 @@ function logout(){
 // ==================== 页面导航 ====================
 function hideAll(){
   ['loginPage','empPage','adminPage',
-   'adminEmp','adminRegister','adminRecord','adminTotal','adminProduct','adminBatch']
+   'adminEmp','adminRegister','adminRecord','adminTotal','adminProduct','adminBatch','adminSettings']
     .forEach(id => {
       const el = document.getElementById(id);
       if(el) el.style.display = 'none';
@@ -2735,6 +2775,55 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
+
+// ==================== Server酱 设置 ====================
+async function loadServerChanSettings() {
+  try {
+    const settings = await apiFetch(`/api/companies/${currentCompany}/settings`);
+    document.getElementById('serverchanKey').value = settings.serverchanKey || '';
+  } catch(e) {
+    console.error('加载 Server酱 设置失败:', e);
+  }
+}
+
+async function saveServerChanSettings() {
+  const key = document.getElementById('serverchanKey').value.trim();
+  const statusEl = document.getElementById('serverchanStatus');
+  
+  try {
+    await apiFetch(`/api/companies/${currentCompany}/settings/serverchan`, {
+      method: 'PUT',
+      body: { key }
+    });
+    statusEl.innerHTML = '<span style="color:#52c41a">✅ 设置已保存</span>';
+    setTimeout(() => statusEl.innerHTML = '', 3000);
+  } catch(e) {
+    statusEl.innerHTML = `<span style="color:#ff4d4f">❌ 保存失败: ${e.message}</span>`;
+  }
+}
+
+async function testServerChanSettings() {
+  const statusEl = document.getElementById('serverchanStatus');
+  statusEl.innerHTML = '<span style="color:#1890ff">⏳ 正在发送测试消息...</span>';
+  
+  try {
+    const result = await apiFetch(`/api/companies/${currentCompany}/settings/serverchan/test`, {
+      method: 'POST'
+    });
+    statusEl.innerHTML = '<span style="color:#52c41a">✅ 测试消息已发送，请查看微信</span>';
+  } catch(e) {
+    statusEl.innerHTML = `<span style="color:#ff4d4f">❌ 测试失败: ${e.message}</span>`;
+  }
+}
+
+// 在显示设置页面时加载配置
+const originalShowAdmin = showAdmin;
+showAdmin = function(tab) {
+  originalShowAdmin(tab);
+  if (tab === 'settings') {
+    loadServerChanSettings();
+  }
+};
 </script>
 
 </body>
