@@ -22,6 +22,7 @@ export function initDb() {
       prod_key     TEXT NOT NULL,
       company_code TEXT NOT NULL,
       name         TEXT NOT NULL,
+      image        TEXT,
       PRIMARY KEY (prod_key, company_code)
     );
 

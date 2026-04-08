@@ -8,7 +8,7 @@ const router = Router({ mergeParams: true });
 router.get('/', (req, res) => {
   const { company } = req.params;
   const db = getDb();
-  const prods = db.prepare(`SELECT prod_key, name, hidden FROM products WHERE company_code=? ORDER BY prod_key`).all(company);
+  const prods = db.prepare(`SELECT prod_key, name, hidden, image FROM products WHERE company_code=? ORDER BY prod_key`).all(company);
   const result = {};
   for (const p of prods) {
     const procs = db.prepare(
@@ -17,6 +17,7 @@ router.get('/', (req, res) => {
     result[p.prod_key] = {
       name: p.name,
       hidden: p.hidden === 1,
+      image: p.image || null,
       processes: procs.map(pr => {
         const obj = { id: pr.id, n: pr.name, p: pr.price };
         if (pr.remark) obj.r = pr.remark;
@@ -59,6 +60,23 @@ router.post('/:key/toggle-hidden', (req, res) => {
   const newHidden = prod.hidden === 1 ? 0 : 1;
   db.prepare(`UPDATE products SET hidden=? WHERE prod_key=? AND company_code=?`).run(newHidden, key, company);
   res.json({ ok: true, hidden: newHidden === 1 });
+});
+
+// ── 上传/更新产品图片 ─────────────────────────────────────────
+router.put('/:key/image', (req, res) => {
+  const { company, key } = req.params;
+  const { image } = req.body; // base64 data URL 或 null（删除图片）
+  const db = getDb();
+  const prod = db.prepare(`SELECT prod_key FROM products WHERE prod_key=? AND company_code=?`).get(key, company);
+  if (!prod) return res.status(404).json({ error: '产品不存在' });
+
+  // 校验大小（base64 约 1.37倍，限制原图 500KB 约等于 base64 700KB）
+  if (image && image.length > 800 * 1024) {
+    return res.status(400).json({ error: '图片太大，请压缩后上传（建议500KB以内）' });
+  }
+
+  db.prepare(`UPDATE products SET image=? WHERE prod_key=? AND company_code=?`).run(image || null, key, company);
+  res.json({ ok: true });
 });
 
 // ── 删除产品 ──────────────────────────────────────────────────
