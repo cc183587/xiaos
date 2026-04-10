@@ -42,8 +42,24 @@ router.get('/', (req, res) => {
 
   const todayOutQty  = todayDeliveries.reduce((s,d)=>s+d.qty, 0);
   const todayRevenue = todayDeliveries.reduce((s,d)=>s+d.cost, 0);
-  const todayWage    = todayDeliveries.reduce((s,d)=>s+d.wage_share, 0);
+  // 今日工资从 records 表统计
+  const todayRecords = db.prepare(`
+    SELECT qty, price FROM records WHERE company_code=? AND date LIKE ?
+  `).all(company, `${todayStr}%`);
+  const todayWage = todayRecords.reduce((s,r)=>s+(r.qty||0)*(r.price||0),0);
   const todayIncome  = todayRevenue - todayWage;
+
+  // 从 records 表统计员工薪资（与前端薪资明细保持一致）
+  function calcWageFromRecords(ym) {
+    const records = db.prepare(`
+      SELECT r.date, r.qty, r.price
+      FROM records r
+      WHERE r.company_code=?
+    `).all(company);
+    return records
+      .filter(r => normDate(r.date).slice(0,7) === ym)
+      .reduce((s, r) => s + (r.qty || 0) * (r.price || 0), 0);
+  }
 
   // 按出货月份统计（本月/上月）
   function monthStats(ym) {
@@ -57,7 +73,8 @@ router.get('/', (req, res) => {
     const delivs = allDelivs.filter(d => normDate(d.date).slice(0,7) === ym);
     const outQty = delivs.reduce((s,d)=>s+d.qty,0);
     const profit = delivs.reduce((s,d)=>s+d.profit,0);
-    const wage   = delivs.reduce((s,d)=>s+d.wage_share,0);
+    // 工资从 records 表统计，与前端薪资明细保持一致
+    const wage = calcWageFromRecords(ym);
 
     // 在库量 = 该月入库总量 - 该月入库批次的已出库量（即尚未出完的库存）
     // 取该月创建的所有批次（兼容 ISO "2026-03" 和 zh-CN "2026/3" 格式）
@@ -95,7 +112,9 @@ router.get('/', (req, res) => {
   const allInQty  = allBatches.reduce((s,b)=>s+b.qty,0);
   const allOutQty = allDeliveries.reduce((s,d)=>s+d.qty,0);
   const allProfit = allDeliveries.reduce((s,d)=>s+d.profit,0);
-  const allWage   = allDeliveries.reduce((s,d)=>s+d.wage_share,0);
+  // 累计工资也从 records 表统计
+  const allRecords = db.prepare(`SELECT qty, price FROM records WHERE company_code=?`).all(company);
+  const allWage = allRecords.reduce((s,r)=>s+(r.qty||0)*(r.price||0),0);
 
   res.json({
     today: { outQty: todayOutQty, revenue: todayRevenue, wage: todayWage, income: todayIncome },
