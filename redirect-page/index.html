@@ -353,7 +353,9 @@
             defaultUrl: 'https://70140a09.r15.cpolar.top', // 默认 Cpolar 地址
             adminPassword: 'admin123', // 管理密码（建议修改）
             storageKey: 'factory_system_url',
-            redirectDelay: 1 // 跳转倒计时秒数
+            redirectDelay: 1, // 跳转倒计时秒数
+            // 固定局域网地址（用于外网访问时显示本地入口）
+            fixedLanUrl: 'http://192.168.31.193:3001'  // ← 修改为你的实际局域网地址
         };
         
         // DOM 元素
@@ -390,8 +392,8 @@
                 return `http://localhost${port}`;
             }
             
-            // 其他情况（如 cpolar 域名）不显示局域网地址
-            return null;
+            // 其他情况（外网访问）显示配置的固定局域网地址
+            return CONFIG.fixedLanUrl;
         }
         
         // 获取保存的 URL
