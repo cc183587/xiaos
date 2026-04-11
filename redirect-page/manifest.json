@@ -1,0 +1,22 @@
+{
+  "name": "每日产量登记",
+  "short_name": "产量登记",
+  "description": "工厂产量登记与工资管理系统",
+  "start_url": "/xiaos/redirect-page/",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
