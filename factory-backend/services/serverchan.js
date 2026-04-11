@@ -20,6 +20,7 @@ export async function sendServerChanMessage({ sendKey, title, content }) {
 
   try {
     const url = `${API_BASE}/${sendKey}.send`;
+    console.error('[Server酱] 发送请求到:', url.substring(0, 50) + '...');
     
     const params = new URLSearchParams();
     params.append('title', title || '产量登记提醒');
@@ -27,15 +28,23 @@ export async function sendServerChanMessage({ sendKey, title, content }) {
       params.append('desp', content);
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
       },
-      body: params.toString()
+      body: params.toString(),
+      signal: controller.signal
     });
+    
+    clearTimeout(timeoutId);
+    console.error('[Server酱] 收到响应, status:', response.status);
 
     const result = await response.json();
+    console.error('[Server酱] 响应数据:', JSON.stringify(result).substring(0, 200));
 
     if (result.code === 0) {
       return { 
@@ -50,7 +59,7 @@ export async function sendServerChanMessage({ sendKey, title, content }) {
       };
     }
   } catch (error) {
-    console.error('[Server酱] 推送异常:', error);
+    console.error('[Server酱] 推送异常:', error.message);
     return { 
       success: false, 
       message: `网络错误: ${error.message}` 
@@ -66,22 +75,13 @@ export async function sendServerChanMessage({ sendKey, title, content }) {
 export function buildRecordMessage(record) {
   const { empName, empId, date, time, prodName, batchCode, processes } = record;
   
-  let content = `## 📋 产量登记通知
-
-**员工**: ${empName} (${empId})  
-**日期**: ${date}  
-**时间**: ${time}  
-**产品**: ${prodName}${batchCode ? `  
-**批次**: ${batchCode}` : ''}
-
----
-
-### 工序明细
-
-| 工序 | 数量 | 单价 | 小计 |
-|------|------|------|------|
-`;
-
+  // 格式化日期时间
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}/${now.getMonth() + 1}/${now.getDate()}`;
+  const timeStr = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+  
+  // 构建表格内容
+  let tableRows = '';
   let totalQty = 0;
   let totalWage = 0;
 
@@ -89,18 +89,16 @@ export function buildRecordMessage(record) {
     const subtotal = p.qty * p.price;
     totalQty += p.qty;
     totalWage += subtotal;
-    content += `| ${p.name} | ${p.qty} | ¥${p.price.toFixed(2)} | ¥${subtotal.toFixed(2)} |\n`;
+    tableRows += `| ${prodName} | ${p.name} | ${p.qty} | ¥${p.price.toFixed(2)} | ¥${subtotal.toFixed(2)} |\n`;
   }
 
-  content += `
----
+  const content = `👤${empName}
+🕒${dateStr} ${timeStr} 
+📦${batchCode || ''}
 
-**合计数量**: ${totalQty} 件  
-**合计工资**: ¥${totalWage.toFixed(2)}
-
----
-*来自产量登记系统*
-`;
+| 产品 | 工序 | 数量 | 单价 | 小计 |
+|------|------|------|------|------|
+${tableRows}| 合计 |  |  |  | ¥${totalWage.toFixed(2)} |`;
 
   return content;
 }

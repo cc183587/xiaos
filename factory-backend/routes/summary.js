@@ -94,9 +94,11 @@ router.get('/', (req, res) => {
     const totalInQty   = monthBatches.reduce((s,b)=>s+b.qty, 0);
     const totalOutQty  = monthBatches.reduce((s,b)=>s+(b.out_qty||0), 0);
     const totalLossQty = monthBatches.reduce((s,b)=>s+(b.loss_qty||0), 0);
-    const inQty = Math.max(0, totalInQty - totalOutQty - totalLossQty); // 在库 = 入库 - 已出库 - 报损
+    const inStockQty = Math.max(0, totalInQty - totalOutQty - totalLossQty); // 在库 = 入库 - 已出库 - 报损
 
-    return { inQty, outQty, profit, wage };
+    // 本月返回在库量作为 inQty，上月和累计返回入库总量
+    const isThisMonth = ym === thisYM;
+    return { inQty: isThisMonth ? inStockQty : totalInQty, inStockQty, outQty, profit, wage };
   }
 
   const thisMonth = monthStats(thisYM);

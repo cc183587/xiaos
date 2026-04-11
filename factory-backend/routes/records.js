@@ -1,6 +1,13 @@
 import { Router } from 'express';
 import { getDb } from '../config/database.js';
 import { sendServerChanMessage, buildRecordMessage } from '../services/serverchan.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const LOG_FILE = path.join(__dirname, '..', 'serverchan.log');
 
 const router = Router({ mergeParams: true });
 // 路由前缀：/api/companies/:company/records
@@ -36,10 +43,10 @@ router.get('/', (req, res) => {
 });
 
 // ── 添加产量记录（批量，一次登记多个工序）──────────────────────
-// POST { empId, prodKey, date, processes: [{name, qty, price}], batchCode, regId? }
+// POST { empId, prodKey, date, processes: [{name, qty, price}], batchCode, regId?, isAdmin? }
 router.post('/', (req, res) => {
   const { company } = req.params;
-  const { empId, prodKey, date, processes, batchCode, regId } = req.body;
+  const { empId, prodKey, date, processes, batchCode, regId, isAdmin } = req.body;
   if (!empId || !prodKey || !date || !processes || processes.length === 0) {
     return res.status(400).json({ error: '参数不完整' });
   }
@@ -83,35 +90,104 @@ router.post('/', (req, res) => {
     }
   }
 
-  // 发送 Server酱 微信推送提醒
+  // 发送 Server酱 微信推送提醒（仅员工登记时推送，管理员登记不推送）
+  if (isAdmin) {
+    console.error('[Server酱] 管理员登记，跳过推送');
+    try {
+      fs.appendFileSync(LOG_FILE, `[${new Date().toISOString()}] 管理员登记，跳过推送\n`);
+    } catch(e) { console.error('日志写入失败:', e.message); }
+  } else {
+  console.error('[Server酱] 开始推送处理');
+  try {
+    fs.appendFileSync(LOG_FILE, `[${new Date().toISOString()}] 开始推送处理\n`);
+  } catch(e) { console.error('日志写入失败:', e.message); }
+  
   try {
     const settings = db.prepare(`SELECT serverchan_key FROM settings WHERE company_code=?`).get(company);
+    console.error('[Server酱] settings查询:', settings);
+    try {
+      fs.appendFileSync(LOG_FILE, `[${new Date().toISOString()}] settings查询: ${JSON.stringify(settings)}\n`);
+    } catch(e) { console.error('日志写入失败:', e.message); }
+    console.error('[Server酱] 检查serverchan_key:', settings?.serverchan_key ? '存在' : '不存在');
+    try {
+      fs.appendFileSync(LOG_FILE, `[${new Date().toISOString()}] 检查serverchan_key: ${settings?.serverchan_key ? '存在' : '不存在'}\n`);
+    } catch(e) { console.error('日志写入失败:', e.message); }
+    
     if (settings?.serverchan_key) {
-      const emp = db.prepare(`SELECT name FROM employees WHERE id=? AND company_code=?`).get(empId, company);
-      const prod = db.prepare(`SELECT name FROM products WHERE key=? AND company_code=?`).get(prodKey, company);
+      try {
+        fs.appendFileSync(LOG_FILE, `[${new Date().toISOString()}] 进入推送逻辑\n`);
+      } catch(e) { console.error('日志写入失败:', e.message); }
+      console.error('[Server酱] 查询员工和产品信息...');
+      let emp, prod;
+      try {
+        emp = db.prepare(`SELECT name FROM employees WHERE id=? AND company_code=?`).get(empId, company);
+        console.error('[Server酱] 员工查询结果:', emp);
+      } catch(e) {
+        console.error('[Server酱] 员工查询失败:', e.message);
+      }
+      try {
+        prod = db.prepare(`SELECT name FROM products WHERE prod_key=? AND company_code=?`).get(prodKey, company);
+        console.error('[Server酱] 产品查询结果:', prod);
+      } catch(e) {
+        console.error('[Server酱] 产品查询失败:', e.message);
+      }
       
-      const messageContent = buildRecordMessage({
-        empName: emp?.name || empId,
-        empId,
-        date,
-        time: now,
-        prodName: prod?.name || prodKey,
-        batchCode,
-        processes
-      });
+      console.error('[Server酱] 构建消息, processes:', JSON.stringify(processes));
+      let messageContent;
+      try {
+        messageContent = buildRecordMessage({
+          empName: emp?.name || empId,
+          empId,
+          date,
+          time: now,
+          prodName: prod?.name || prodKey,
+          batchCode,
+          processes
+        });
+        console.error('[Server酱] 消息构建成功');
+      } catch (buildErr) {
+        console.error('[Server酱] 消息构建失败:', buildErr.message);
+        throw buildErr;
+      }
 
       // 异步发送推送，不阻塞响应
+      console.error('[Server酱] 准备发送推送...');
+      try {
+        fs.appendFileSync(LOG_FILE, `[${new Date().toISOString()}] 准备发送推送, sendKey=${settings.serverchan_key?.substring(0, 10) || 'null'}...\n`);
+      } catch (e) {
+        console.error('[Server酱] 日志写入失败:', e.message);
+      }
+      
+      console.error('[Server酱] 调用sendServerChanMessage...');
+      try {
+        fs.appendFileSync(LOG_FILE, `[${new Date().toISOString()}] 调用sendServerChanMessage\n`);
+      } catch (e) {
+        console.error('[Server酱] 日志写入失败:', e.message);
+      }
+      
       sendServerChanMessage({
         sendKey: settings.serverchan_key,
         title: `【${emp?.name || empId}】产量登记`,
         content: messageContent
       }).then(result => {
+        const logMsg = `[${new Date().toISOString()}] 推送结果: success=${result.success}, message=${result.message}\n`;
+        try {
+          fs.writeFileSync(LOG_FILE, logMsg, { flag: 'a' });
+        } catch (e) {
+          console.error('[Server酱] 日志写入失败:', e.message);
+        }
         if (result.success) {
           console.log(`[Server酱] 推送成功: ${empId} ${date}`);
         } else {
           console.error(`[Server酱] 推送失败: ${result.message}`);
         }
       }).catch(err => {
+        const logMsg = `[${new Date().toISOString()}] 推送异常: ${err.message}\n`;
+        try {
+          fs.writeFileSync(LOG_FILE, logMsg, { flag: 'a' });
+        } catch (e) {
+          console.error('[Server酱] 日志写入失败:', e.message);
+        }
         console.error('[Server酱] 推送异常:', err);
       });
     }
@@ -119,6 +195,7 @@ router.post('/', (req, res) => {
     console.error('[Server酱] 推送处理错误:', pushErr);
     // 推送失败不影响主流程
   }
+  } // end of if (!isAdmin)
 
   res.json({ ok: true, regId: finalRegId, time: now });
 });

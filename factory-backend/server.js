@@ -25,8 +25,19 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 静态文件：提供前端 index.html（从上级目录）
-app.use(express.static(path.join(__dirname, '..')));
+// 静态文件：提供前端 index.html（从上级目录），严格禁用缓存
+app.use(express.static(path.join(__dirname, '..'), {
+  etag: false,
+  lastModified: false,
+  setHeaders: (res, path) => {
+    // 对所有文件禁用缓存
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+    res.setHeader('Vary', '*');
+  }
+}));
 
 // ── API 路由 ──────────────────────────────────────────────────
 app.use('/api/auth',                               authRouter);

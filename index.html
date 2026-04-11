@@ -27,10 +27,16 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-icon-180x180.png">
 
 <!-- PWA Manifest -->
-<link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="/manifest.json?v=3">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 
-<!-- SheetJS 用于导出Excel（本地文件，避免CDN慢） -->
-<script src="/xlsx.local.js"></script>
+<!-- SheetJS 用于导出Excel -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+<!-- 动态版本号，每次更新时修改 -->
+<script>window.APP_VERSION = '3';</script>
 <style>
   *{margin:0;padding:0;box-sizing:border-box;font-family:Microsoft YaHei,sans-serif}
   body{background:#f0f2f5;padding:15px;max-width:640px;margin:0 auto;min-height:100vh}
@@ -725,7 +731,7 @@ async function checkAndRestoreSession() {
       // 显示退出按钮
       document.querySelector('.logout-btn').style.display = 'block';
       // 跳转到之前保存的tab
-      showAdmin(currentTab);
+      await showAdmin(currentTab);
       setTimeout(adjustAdminPadding, 50);
       return true;
     } else if (session.role === 'employee') {
@@ -916,7 +922,7 @@ async function login(){
     document.getElementById('adminTitle').textContent = result.companyName + ' 管理员面板';
     // 显示退出按钮
     document.querySelector('.logout-btn').style.display = 'block';
-    showAdmin('summary');
+    await showAdmin('summary');
     setTimeout(adjustAdminPadding, 50);
     showToast(`登录成功！\n祝老板发大财！`, 'success');
     
@@ -986,7 +992,7 @@ function adjustAdminPadding(){
   document.getElementById('adminPage').style.paddingTop = (h + 10) + 'px';
 }
 window.addEventListener('resize', adjustAdminPadding);
-function showAdmin(tab){
+async function showAdmin(tab){
   hideAll();
   show('adminPage');
   show('admin'+tab.charAt(0).toUpperCase()+tab.slice(1));
@@ -1014,9 +1020,9 @@ function showAdmin(tab){
       empSel.innerHTML += `<option value="${e.id}">${e.id} ${e.name || ''}</option>`;
     });
     // 日期默认为空（查询全部），不自动填充今天
-    adminLoadRecord();
+    await adminLoadRecord();
   }
-  if(tab === 'total') adminLoadTotal();
+  if(tab === 'total') await adminLoadTotal();
   if(tab === 'summary') adminLoadSummary();
 }
 
@@ -1068,7 +1074,7 @@ async function adminDelEmp(id){
   }
 }
 
-function adminLoadRecord(){
+async function adminLoadRecord(){
   const empFilter = document.getElementById('recordEmpId').value;
   const dateFilter = document.getElementById('recordDate').value;
 
@@ -1095,56 +1101,59 @@ function adminLoadRecord(){
   let total = 0;
   let hasData = false;
 
+  // 从后端获取记录数据
+  let records = [];
+  try {
+    records = await apiFetch(`/api/companies/${currentCompany}/records`);
+  } catch(e) {
+    console.error('获取记录失败:', e);
+  }
+
   // 先收集所有记录，用于排序
   const allRecords = [];
 
-  Object.keys(data.records).forEach(empId => {
-    const emp = data.emps.find(e => e.id === empId);
-    if(!emp) return;
+  records.forEach(r => {
+    const empId = r.empId;
     
     // 工号过滤
     if(empFilter && empId !== empFilter) return;
 
-    Object.keys(data.records[empId]).forEach(date => {
-      // 日期过滤
-      if(dateFilter && date !== dateFilter) return;
+    // 日期过滤（支持 "2026-04-12" 或 "2026-04-12 08:30:00" 格式）
+    const dateStr = r.date ? r.date.slice(0, 10) : '';
+    if(dateFilter && dateStr !== dateFilter) return;
 
-      const dateData = data.records[empId][date];
-      if(!dateData || typeof dateData !== 'object') return;
-
-      Object.keys(dateData).forEach(prodKey => {
-        const prodName = data.products[prodKey]?.name || prodKey;
-        const recs = dateData[prodKey];
-        if(!Array.isArray(recs)) return;
-
-        recs.forEach((rec, recIdx) => {
-          const amount = (rec.n || 0) * (rec.p || 0);
-          total += amount;
-          allTotal += amount;
-          // 本月统计
-          if(date.startsWith(thisMonthStr)){
-            monthTotal += amount;
-          }
-          // 今日统计
-          if(date === todayStr){
-            todayTotal += amount;
-          }
-          hasData = true;
-          // 收集记录数据用于排序
-          allRecords.push({
-            id: rec.id,
-            empId: empId,
-            empName: emp.name || '-',
-            prodName: prodName,
-            procName: rec.name || '-',
-            quantity: rec.n,
-            price: rec.p,
-            amount: amount,
-            date: date,
-            time: rec.time || ''
-          });
-        });
-      });
+    const emp = data.emps.find(e => e.id === empId);
+    const empName = emp?.name || '-';
+    // 优先使用 prodName，如果没有则尝试从 data.products 查找
+    let prodName = r.prodName || r.prod || '-';
+    if(prodName === '-' && r.prodKey && data.products[r.prodKey]){
+      prodName = data.products[r.prodKey].name;
+    }
+    const amount = (r.n || 0) * (r.p || 0);
+    
+    total += amount;
+    allTotal += amount;
+    // 本月统计
+    if(dateStr.startsWith(thisMonthStr)){
+      monthTotal += amount;
+    }
+    // 今日统计
+    if(dateStr === todayStr){
+      todayTotal += amount;
+    }
+    hasData = true;
+    // 收集记录数据用于排序
+    allRecords.push({
+      id: r.id,
+      empId: empId,
+      empName: empName,
+      prodName: prodName,
+      procName: r.name || '-',
+      quantity: r.n,
+      price: r.p,
+      amount: amount,
+      date: dateStr,
+      time: r.time || ''
     });
   });
 
@@ -1419,10 +1428,19 @@ async function adminLoadSummary(){
   );
 }
 
-function adminLoadTotal(){
+async function adminLoadTotal(){
   const now = new Date();
   const todayStr = getNormalDate(now); // 工资统计用正常日期
   const thisMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+  // 从后端获取最新记录数据，确保与总览页面一致
+  let records;
+  try {
+    records = await apiFetch(`/api/companies/${currentCompany}/records`);
+  } catch(e) {
+    showToast('加载薪资数据失败：' + e.message, 'error');
+    return;
+  }
 
   let html = `<div class="salary-summary-card">
     <div class="sum-header">
@@ -1436,45 +1454,53 @@ function adminLoadTotal(){
   let grandToday = 0, grandMonth = 0, grandTotal = 0;
   let hasData = false;
 
-  Object.keys(data.records || {}).forEach(empId => {
-    const emp = data.emps.find(e => e.id === empId);
-    if(!emp) return;
+  // 按员工分组统计
+  const empStats = {};
+  
+  // 调试：记录本月匹配的记录
+  console.log('=== 薪资明细调试 ===');
+  console.log('本月字符串:', thisMonthStr);
+  console.log('记录总数:', records.length);
+  
+  records.forEach((r, idx) => {
+    const empId = r.empId;
+    if(!empStats[empId]) {
+      empStats[empId] = { today: 0, month: 0, total: 0 };
+    }
+    // 后端返回的字段名是 n (qty) 和 p (price)
+    const amt = (r.n || 0) * (r.p || 0);
+    empStats[empId].total += amt;
+    grandTotal += amt;
+    
+    // 日期格式可能是 "2026-04-12" 或 "2026-04-12 08:30:00"
+    const datePrefix = r.date ? r.date.slice(0, 10) : '';
+    const isThisMonth = datePrefix.startsWith(thisMonthStr);
+    if(isThisMonth){
+      empStats[empId].month += amt;
+      grandMonth += amt;
+      console.log(`记录${idx}: empId=${empId}, date=${r.date}, amt=${amt.toFixed(2)}, 本月累计=${grandMonth.toFixed(2)}`);
+    }
+    if(datePrefix === todayStr){
+      empStats[empId].today += amt;
+      grandToday += amt;
+    }
+  });
+  console.log('本月总计:', grandMonth.toFixed(2));
 
-    let todayAmt = 0, monthAmt = 0, allAmt = 0;
-
-    Object.keys(data.records[empId]).forEach(date => {
-      const dateData = data.records[empId][date];
-      if(!dateData || typeof dateData !== 'object') return;
-
-      Object.keys(dateData).forEach(prodKey => {
-        const recs = dateData[prodKey];
-        if(!Array.isArray(recs)) return;
-        recs.forEach(rec => {
-          if(!rec || typeof rec !== 'object') return;
-          const amt = (rec.n || 0) * (rec.p || 0);
-          allAmt += amt;
-          grandTotal += amt;
-          if(date.startsWith(thisMonthStr)){
-            monthAmt += amt;
-            grandMonth += amt;
-          }
-          if(date === todayStr){
-            todayAmt += amt;
-            grandToday += amt;
-          }
-        });
-      });
-    });
-
-    if(allAmt > 0){
+  // 渲染每个员工的数据（包括不在员工列表中的）
+  Object.keys(empStats).forEach(empId => {
+    const stats = empStats[empId];
+    if(stats.total > 0){
       hasData = true;
-      const nameClass = emp.name ? 'sum-col-name has-value' : 'sum-col-name';
+      const emp = data.emps.find(e => e.id === empId);
+      const empName = emp?.name || '-';
+      const nameClass = emp?.name ? 'sum-col-name has-value' : 'sum-col-name';
       html += `<div class="sum-item">
         <div class="sum-col-id">${empId}</div>
-        <div class="${nameClass}">${emp.name || '-'}</div>
-        <div class="sum-col-amt">${todayAmt.toFixed(2)}</div>
-        <div class="sum-col-amt">${monthAmt.toFixed(2)}</div>
-        <div class="sum-col-amt">${allAmt.toFixed(2)}</div>
+        <div class="${nameClass}">${empName}</div>
+        <div class="sum-col-amt">${stats.today.toFixed(2)}</div>
+        <div class="sum-col-amt">${stats.month.toFixed(2)}</div>
+        <div class="sum-col-amt">${stats.total.toFixed(2)}</div>
       </div>`;
     }
   });
@@ -1514,7 +1540,9 @@ async function adminAddProduct(){
 }
 
 function adminLoadProductList(){
-  const html = Object.keys(data.products).map(k => {
+  // 按产品key（时间戳）排序，最新的显示在最上面
+  const sortedKeys = Object.keys(data.products).sort((a, b) => parseInt(b) - parseInt(a));
+  const html = sortedKeys.map(k => {
     const prod = data.products[k];
     const isHidden = !!prod.hidden;
     const cardOpacity = isHidden ? 'opacity:0.55;' : '';
@@ -1543,7 +1571,8 @@ function adminLoadProductList(){
           <span class="proc-opt-btn" style="background:#E0E7FF;color:#3B82F6" onclick="editProductName('${k}')">编辑</span>
         </div>
       </div>
-      <!-- 产品图片区域 -->
+      <!-- 产品图片和工序区域（点击隐藏后折叠） -->
+      <div id="prodContent_${k}" style="${isHidden ? 'display:none' : ''}">
       <div style="margin:8px 0 12px;display:flex;align-items:flex-start;gap:12px">
         <div id="prodImgBox_${k}" style="width:90px;height:90px;border-radius:8px;overflow:hidden;border:1.5px dashed #d0d5dd;background:#f8f9fa;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer" onclick="document.getElementById('prodImgInput_${k}').click()" title="点击上传图片">
           ${prod.image
@@ -1590,13 +1619,14 @@ function adminLoadProductList(){
           </div>
         </div>
       </div>
-      <!-- 操作按钮行 -->
-      <div class="detail-item">
-        <div class="detail-left">
-          <span class="proc-opt-btn proc-edit-btn" onclick="toggleEditProcess('${k}')">编辑工序</span>
-        </div>
-        <div class="detail-right">
-          <span class="proc-opt-btn proc-del-btn" onclick="adminDelProduct('${k}')">删除产品</span>
+        <!-- 操作按钮行 -->
+        <div class="detail-item">
+          <div class="detail-left">
+            <span class="proc-opt-btn proc-edit-btn" onclick="toggleEditProcess('${k}')">编辑工序</span>
+          </div>
+          <div class="detail-right">
+            <span class="proc-opt-btn proc-del-btn" onclick="adminDelProduct('${k}')">删除产品</span>
+          </div>
         </div>
       </div>
     </div>`;
@@ -1826,7 +1856,8 @@ async function addBatch(){
 }
 
 function adminLoadBatchList(){
-  const sorted = [...data.batches].reverse();
+  // 按批次名（batchCode，格式为 YYYYMMDD-序号）排序，最新的显示在最上面
+  const sorted = [...data.batches].sort((a, b) => b.batchCode.localeCompare(a.batchCode));
   const html = sorted.map(b => {
     const alreadyOut = (b.deliveries || []).reduce((s, d) => s + d.qty, 0);
     const remaining = b.qty - alreadyOut;
@@ -2284,7 +2315,7 @@ async function adminRegister(){
   const date = getNormalDate(new Date());
   try {
     const result = await apiFetch(`/api/companies/${currentCompany}/records`, {
-      method: 'POST', body: { empId, prodKey, date, processes, batchCode: batch.batchCode }
+      method: 'POST', body: { empId, prodKey, date, processes, batchCode: batch.batchCode, isAdmin: true }
     });
     // 更新本地缓存
     if(!data.records[empId]) data.records[empId] = {};
@@ -2508,179 +2539,172 @@ function empShow(){
 }
 
 // Excel导出函数
-function adminExportReport(){
+async function adminExportReport(){
   const now = new Date();
   const thisYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-  // ========== 工作表1：统计总览 ==========
-  let inQty = 0, outQty = 0, profit = 0, wageTotal = 0;
-  let allInQty = 0, allOutQty = 0, allProfit = 0, allWageTotal = 0;
-
-  data.batches.forEach(b => {
-    allInQty += b.qty;
-    if(b.status === 'out'){
-      allOutQty += b.outQty || b.qty;
-      allProfit += b.profit || 0;
-    }
-    const createYM = parseYearMonth(b.createTime);
-    if(createYM === thisYearMonth && b.status === 'in') inQty += b.qty;
-    if(b.status === 'out'){
-      const outYM = parseYearMonth(b.outDate || b.createTime);
-      if(outYM === thisYearMonth){
-        outQty += b.outQty || b.qty;
-        profit += b.profit || 0;
-      }
-    }
-  });
-
-  Object.keys(data.records || {}).forEach(empId => {
-    Object.keys(data.records[empId]).forEach(date => {
-      const recYM = date.substring(0, 7);
-      Object.keys(data.records[empId][date]).forEach(prodKey => {
-        const recs = data.records[empId][date][prodKey];
-        if(!Array.isArray(recs)) return;
-        recs.forEach(rec => {
-          if(rec && typeof rec === 'object'){
-            const amt = (rec.n || 0) * (rec.p || 0);
-            allWageTotal += amt;
-            if(recYM === thisYearMonth) wageTotal += amt;
-          }
-        });
-      });
-    });
-  });
-
-  const overviewRows = [
-    ['统计总览'],
-    [''],
-    ['项目', '本月', '累计'],
-    ['入库数量', inQty, allInQty],
-    ['出库数量', outQty, allOutQty],
-    ['预估利润', profit.toFixed(2), allProfit.toFixed(2)],
-    ['员工薪资', wageTotal.toFixed(2), allWageTotal.toFixed(2)],
-    ['统计时间', now.toLocaleString('zh-CN'), '']
-  ];
-
-  // ========== 工作表2：批次信息 ==========
-  const batchRows = [['批次号','产品','颜色','入库数量','单价','总成本','员工薪资','状态','已出库','报损数量','报损原因','剩余','创建时间','最后出库时间','实际利润']];
-  data.batches.forEach(b => {
-    const alreadyOut = (b.deliveries || []).reduce((s, d) => s + d.qty, 0);
-    const remaining = b.qty - alreadyOut - (b.lossQty || 0);
-    const totalProfit = (b.deliveries || []).reduce((s, d) => s + d.profit, 0) || b.profit || 0;
-    let statusLabel = b.status === 'in' ? '入库中' : b.status === 'partial' ? '部分出库' : b.status === 'closed' ? '已结束' : '已出库';
-    batchRows.push([
-      b.batchCode || '', b.prodName || '', b.color || '', b.qty, b.price,
-      (b.totalCost||0).toFixed(2), (b.wageTotal||0).toFixed(2),
-      statusLabel, alreadyOut, b.lossQty || 0, b.lossReason || '',
-      remaining < 0 ? 0 : remaining,
-      b.createTime || '', b.outDate || b.closedTime || '', totalProfit.toFixed(2)
+  try {
+    // 从后端获取所有数据
+    const [batchesRes, recordsRes, summaryRes, productsRes] = await Promise.all([
+      apiFetch(`/api/companies/${currentCompany}/batches`),
+      apiFetch(`/api/companies/${currentCompany}/records`),
+      apiFetch(`/api/companies/${currentCompany}/summary`),
+      apiFetch(`/api/companies/${currentCompany}/products`)
     ]);
-    // 每次出货明细（子行）
-    if(b.deliveries && b.deliveries.length > 0){
-      b.deliveries.forEach((d, i) => {
-        batchRows.push([
-          `  └ 第${i+1}次出货`, '', '', '', '',
-          '', '', '', d.qty, '', '', '',
-          '', d.date, d.profit.toFixed(2)
-        ]);
-      });
-    }
-    // 报损行
-    if(b.lossQty > 0){
+
+    console.log('导出报表 - API返回数据:');
+    console.log('batchesRes:', batchesRes);
+    console.log('recordsRes:', recordsRes);
+    console.log('summaryRes:', summaryRes);
+    console.log('productsRes:', productsRes);
+
+    // API 返回的数据结构：batchesRes 直接是数组，recordsRes 直接是数组，productsRes 直接是对象
+    const batches = Array.isArray(batchesRes) ? batchesRes : (batchesRes.batches || []);
+    const records = Array.isArray(recordsRes) ? recordsRes : (recordsRes.records || []);
+    const summary = summaryRes || {};
+    const products = (productsRes && productsRes.products) ? productsRes.products : (productsRes || {});
+
+    // ========== 工作表1：统计总览 ==========
+    const overviewRows = [
+      ['统计总览'],
+      [''],
+      ['项目', '本月', '累计'],
+      ['入库数量', summary.thisMonth?.inQty || 0, summary.all?.inQty || 0],
+      ['出库数量', summary.thisMonth?.outQty || 0, summary.all?.outQty || 0],
+      ['预估利润', (summary.thisMonth?.profit || 0).toFixed(2), (summary.all?.profit || 0).toFixed(2)],
+      ['员工薪资', (summary.thisMonth?.wage || 0).toFixed(2), (summary.all?.wage || 0).toFixed(2)],
+      ['统计时间', now.toLocaleString('zh-CN'), '']
+    ];
+
+    // ========== 工作表2：批次信息 ==========
+    const batchRows = [['批次号','产品','颜色','入库数量','单价','总成本','员工薪资','状态','已出库','报损数量','报损原因','剩余','创建时间','最后出库时间','实际利润']];
+    batches.forEach(b => {
+      const alreadyOut = (b.deliveries || []).reduce((s, d) => s + d.qty, 0);
+      const remaining = b.qty - alreadyOut - (b.loss_qty || 0);
+      const totalProfit = (b.deliveries || []).reduce((s, d) => s + d.profit, 0) || b.profit || 0;
+      let statusLabel = b.status === 'in' ? '入库中' : b.status === 'partial' ? '部分出库' : b.status === 'closed' ? '已结束' : '已出库';
+      // 后端返回 prodName（驼峰），兼容 prod_name（下划线）
+      const prodName = b.prodName || b.prod_name || '';
       batchRows.push([
-        `  └ 报损`, '', '', '', '',
-        '', '', '', '', b.lossQty, b.lossReason || '', '',
-        '', b.closedTime || '', '0.00'
+        b.batch_code || b.batchCode || '', prodName, b.color || '', b.qty, b.price,
+        (b.total_cost||b.totalCost||0).toFixed(2), (b.wage_total||b.wageTotal||0).toFixed(2),
+        statusLabel, alreadyOut, b.loss_qty || 0, b.loss_reason || '',
+        remaining < 0 ? 0 : remaining,
+        b.create_time || b.createTime || '', b.out_date || b.closed_time || '', totalProfit.toFixed(2)
       ]);
-    }
-  });
-
-  // ========== 工作表3：产量记录 ==========
-  const recordRows = [['工号','姓名','产品','工序','数量','单价','金额','日期','时间','批次号']];
-  Object.keys(data.records).forEach(empId => {
-    const emp = data.emps.find(e => e.id === empId);
-    if(!emp) return;
-    Object.keys(data.records[empId]).forEach(date => {
-      const dateData = data.records[empId][date];
-      if(!dateData || typeof dateData !== 'object') return;
-      Object.keys(dateData).forEach(prodKey => {
-        const prodName = data.products[prodKey]?.name || prodKey;
-        const recs = dateData[prodKey];
-        if(!Array.isArray(recs)) return;
-        recs.forEach(rec => {
-          const amount = (rec.n || 0) * (rec.p || 0);
-          recordRows.push([empId, emp.name||'', prodName, rec.name||'', rec.n, rec.p, amount.toFixed(2), date, rec.time||'', rec.batchCode||'']);
+      // 每次出货明细（子行）
+      if(b.deliveries && b.deliveries.length > 0){
+        b.deliveries.forEach((d, i) => {
+          batchRows.push([
+            `  └ 第${i+1}次出货`, '', '', '', '',
+            '', '', '', d.qty, '', '', '',
+            '', d.date, d.profit.toFixed(2)
+          ]);
         });
-      });
+      }
+      // 报损行
+      if(b.loss_qty > 0){
+        batchRows.push([
+          `  └ 报损`, '', '', '', '',
+          '', '', '', '', b.loss_qty, b.loss_reason || '', '',
+          '', b.closed_time || '', '0.00'
+        ]);
+      }
     });
-  });
 
-  // ========== 工作表4：薪资明细 ==========
-  const totalRows = [['工号','姓名','总金额']];
-  const empTotals = {};
-  Object.keys(data.records).forEach(empId => {
-    const emp = data.emps.find(e => e.id === empId);
-    if(!emp) return;
-    let total = 0;
-    Object.keys(data.records[empId]).forEach(date => {
-      const dateData = data.records[empId][date];
-      if(!dateData || typeof dateData !== 'object') return;
-      Object.keys(dateData).forEach(prodKey => {
-        const recs = dateData[prodKey];
-        if(!Array.isArray(recs)) return;
-        recs.forEach(rec => {
-          total += (rec.n || 0) * (rec.p || 0);
-        });
-      });
+    // ========== 工作表3：产量记录 ==========
+    const recordRows = [['工号','姓名','产品','颜色','工序','数量','单价','金额','日期','时间','批次号']];
+    records.forEach(r => {
+      const emp = data.emps.find(e => e.id === r.empId);
+      const empName = emp?.name || '-';
+      // 根据 prodKey 查找产品名称和颜色
+      let prodName = r.prodName || '';
+      let color = r.color || '';
+      if((!prodName || !color) && r.prodKey){
+        // 优先从 data.products 查找
+        if(data.products[r.prodKey]){
+          prodName = prodName || data.products[r.prodKey].name;
+          color = color || data.products[r.prodKey].color || '';
+        } else if(products[r.prodKey]){
+          // 从 API 返回的 products 查找
+          prodName = prodName || products[r.prodKey].name;
+        }
+      }
+      // 从批次信息查找颜色
+      if(!color && r.batchCode){
+        const batch = batches.find(b => (b.batch_code || b.batchCode) === r.batchCode);
+        if(batch){
+          color = batch.color || '';
+        }
+      }
+      const amount = (r.n || 0) * (r.p || 0);
+      recordRows.push([r.empId, empName, prodName, color, r.name || '', r.n, r.p, amount.toFixed(2), r.date, r.time || '', r.batchCode || '']);
     });
-    if(total > 0){
-      empTotals[empId] = total;
-      totalRows.push([empId, emp.name||'', total.toFixed(2)]);
-    }
-  });
-  const grandTotal = Object.values(empTotals).reduce((sum, val) => sum + val, 0);
-  totalRows.push(['', '总计', grandTotal.toFixed(2)]);
 
-  // ========== 工作表5：员工列表 ==========
-  const empRows = [['工号','姓名']];
-  data.emps.forEach(e => { empRows.push([e.id, e.name || '']); });
+    // ========== 工作表4：薪资明细 ==========
+    const totalRows = [['工号','姓名','总金额']];
+    const empTotals = {};
+    records.forEach(r => {
+      const amount = (r.n || 0) * (r.p || 0);
+      if(!empTotals[r.empId]) empTotals[r.empId] = 0;
+      empTotals[r.empId] += amount;
+    });
+    Object.keys(empTotals).forEach(empId => {
+      const emp = data.emps.find(e => e.id === empId);
+      const empName = emp?.name || '-';
+      totalRows.push([empId, empName, empTotals[empId].toFixed(2)]);
+    });
+    const grandTotal = Object.values(empTotals).reduce((sum, val) => sum + val, 0);
+    totalRows.push(['', '总计', grandTotal.toFixed(2)]);
 
-  // ========== 工作表6：产品列表 ==========
-  const prodRows = [['产品名称','工序']];
-  Object.keys(data.products).forEach(k => {
-    const procs = data.products[k].processes.map(p => `${p.n}:${p.p}元`).join('; ');
-    prodRows.push([data.products[k].name, procs]);
-  });
+    // ========== 工作表5：员工列表 ==========
+    const empRows = [['工号','姓名']];
+    data.emps.forEach(e => { empRows.push([e.id, e.name || '']); });
 
-  // 创建工作簿
-  const wb = XLSX.utils.book_new();
+    // ========== 工作表6：产品列表 ==========
+    const prodRows = [['产品名称','工序']];
+    Object.keys(products).forEach(k => {
+      // 后端返回的工序字段是 n(name) 和 p(price)，兼容 name/price 格式
+      const procs = products[k].processes?.map(p => {
+        const procName = p.n || p.name || '';
+        const procPrice = p.p !== undefined ? p.p : (p.price !== undefined ? p.price : '');
+        return `${procName}:${procPrice}元`;
+      }).join('; ') || '';
+      prodRows.push([products[k].name, procs]);
+    });
 
-  const ws1 = XLSX.utils.aoa_to_sheet(overviewRows);
-  ws1['!cols'] = [{wch:12},{wch:15},{wch:15}];
-  XLSX.utils.book_append_sheet(wb, ws1, '统计总览');
+    // 创建工作簿
+    const wb = XLSX.utils.book_new();
 
-  const ws2 = XLSX.utils.aoa_to_sheet(batchRows);
-  ws2['!cols'] = [{wch:14},{wch:10},{wch:8},{wch:8},{wch:8},{wch:10},{wch:10},{wch:8},{wch:18},{wch:18},{wch:10}];
-  XLSX.utils.book_append_sheet(wb, ws2, '批次信息');
+    const ws1 = XLSX.utils.aoa_to_sheet(overviewRows);
+    ws1['!cols'] = [{wch:12},{wch:15},{wch:15}];
+    XLSX.utils.book_append_sheet(wb, ws1, '统计总览');
 
-  const ws3 = XLSX.utils.aoa_to_sheet(recordRows);
-  ws3['!cols'] = [{wch:8},{wch:10},{wch:10},{wch:12},{wch:8},{wch:8},{wch:10},{wch:12},{wch:10},{wch:14}];
-  XLSX.utils.book_append_sheet(wb, ws3, '产量记录');
+    const ws2 = XLSX.utils.aoa_to_sheet(batchRows);
+    ws2['!cols'] = [{wch:14},{wch:10},{wch:8},{wch:8},{wch:8},{wch:10},{wch:10},{wch:8},{wch:18},{wch:18},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, ws2, '批次信息');
 
-  const ws4 = XLSX.utils.aoa_to_sheet(totalRows);
-  ws4['!cols'] = [{wch:10},{wch:10},{wch:12}];
-  XLSX.utils.book_append_sheet(wb, ws4, '薪资明细');
+    const ws3 = XLSX.utils.aoa_to_sheet(recordRows);
+    ws3['!cols'] = [{wch:8},{wch:10},{wch:10},{wch:12},{wch:8},{wch:8},{wch:10},{wch:12},{wch:10},{wch:14}];
+    XLSX.utils.book_append_sheet(wb, ws3, '产量记录');
 
-  const ws5 = XLSX.utils.aoa_to_sheet(empRows);
-  ws5['!cols'] = [{wch:10},{wch:10}];
-  XLSX.utils.book_append_sheet(wb, ws5, '员工列表');
+    const ws4 = XLSX.utils.aoa_to_sheet(totalRows);
+    ws4['!cols'] = [{wch:10},{wch:10},{wch:12}];
+    XLSX.utils.book_append_sheet(wb, ws4, '薪资明细');
 
-  const ws6 = XLSX.utils.aoa_to_sheet(prodRows);
-  ws6['!cols'] = [{wch:12},{wch:40}];
-  XLSX.utils.book_append_sheet(wb, ws6, '产品列表');
+    const ws5 = XLSX.utils.aoa_to_sheet(empRows);
+    ws5['!cols'] = [{wch:10},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, ws5, '员工列表');
 
-  const fileName = `工厂报表_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.xlsx`;
-  XLSX.writeFile(wb, fileName);
+    const ws6 = XLSX.utils.aoa_to_sheet(prodRows);
+    ws6['!cols'] = [{wch:12},{wch:40}];
+    XLSX.utils.book_append_sheet(wb, ws6, '产品列表');
+
+    const fileName = `工厂报表_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+  } catch(e) {
+    showToast('导出失败：' + e.message, 'error');
+  }
 }
 
 function adminExportRecord(){
@@ -2770,7 +2794,7 @@ async function delRecord(recId){
         }
       }
     }
-    adminLoadRecord();
+    await adminLoadRecord();
     showToast('❎ 已删除', 'delete');
   } catch(e){
     showToast('删除失败：' + e.message, 'error');
@@ -2810,7 +2834,7 @@ async function editRecord(recId){
     });
     // 更新本地缓存
     rec.n = newQty;
-    adminLoadRecord();
+    await adminLoadRecord();
     showToast('✅ 修改成功', 'success');
   } catch(e){
     showToast('修改失败：' + e.message, 'error');
@@ -2841,15 +2865,14 @@ async function editRecord(recId){
 
 <!-- Service Worker 注册 -->
 <script>
+// PWA 缓存已禁用
+// 注销已存在的 Service Worker
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then(registration => {
-        console.log('ServiceWorker 注册成功:', registration);
-      })
-      .catch(error => {
-        console.log('ServiceWorker 注册失败:', error);
-      });
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    registrations.forEach(registration => {
+      registration.unregister();
+      console.log('ServiceWorker 已注销:', registration);
+    });
   });
 }
 
@@ -2895,8 +2918,8 @@ async function testServerChanSettings() {
 
 // 在显示设置页面时加载配置
 const originalShowAdmin = showAdmin;
-showAdmin = function(tab) {
-  originalShowAdmin(tab);
+showAdmin = async function(tab) {
+  await originalShowAdmin(tab);
   if (tab === 'settings') {
     loadServerChanSettings();
   }
