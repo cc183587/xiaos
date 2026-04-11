@@ -47,3 +47,8 @@ logs/
 # WorkBuddy files (except memory)
 .workbuddy/
 !.workbuddy/memory/
+
+# Android build
+android-app/.gradle/
+android-app/app/build/
+android-app/local.properties
