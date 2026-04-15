@@ -111,9 +111,8 @@ export function initDb() {
       updated_at      TEXT
     );
 
+
     -- 库存物品表
-    DROP TABLE IF EXISTS stock_items;
-    DROP TABLE IF EXISTS stock_logs;
     CREATE TABLE IF NOT EXISTS stock_items (
       id           INTEGER PRIMARY KEY AUTOINCREMENT,
       company_code TEXT NOT NULL,
@@ -160,6 +159,13 @@ export function initDb() {
   // 数据库迁移：如果 products 表没有 hidden 列则添加
   try {
     db.exec(`ALTER TABLE products ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0`);
+  } catch(e) {
+    // 列已存在，忽略
+  }
+
+  // 数据库迁移：如果 stock_logs 表没有 created_at 列则添加
+  try {
+    db.exec(`ALTER TABLE stock_logs ADD COLUMN created_at TEXT`);
   } catch(e) {
     // 列已存在，忽略
   }
