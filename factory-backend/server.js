@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import compression from 'compression';
 import { initDb } from './scripts/initDb.js';
 import { getDb } from './config/database.js';
 
@@ -24,19 +25,22 @@ const app = express();
 
 // ── 中间件 ────────────────────────────────────────────────────
 app.use(cors());
+app.use(compression()); // Gzip压缩
 app.use(express.json());
 
-// 静态文件：提供前端 index.html（从上级目录），严格禁用缓存
+// 静态文件：提供前端 index.html（从上级目录），允许缓存1小时
 app.use(express.static(path.join(__dirname, '..'), {
-  etag: false,
-  lastModified: false,
+  etag: true,
+  lastModified: true,
+  maxAge: '1h',
   setHeaders: (res, path) => {
-    // 对所有文件禁用缓存
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, proxy-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    res.setHeader('Surrogate-Control', 'no-store');
-    res.setHeader('Vary', '*');
+    if (path.endsWith('.html')) {
+      // HTML文件缓存1小时
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+    } else {
+      // 其他静态资源缓存7天
+      res.setHeader('Cache-Control', 'public, max-age=604800');
+    }
   }
 }));
 

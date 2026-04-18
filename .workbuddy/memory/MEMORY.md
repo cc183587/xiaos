@@ -28,6 +28,7 @@
 - **工资统计列表样式改版（2026-03-25）**：按用户提供的参考样式重写工资统计卡片。原 `wage-stat-card` 等旧 class 全部替换为 `salary-summary-card`，去掉了 `position:absolute` 固定表头方案，改为普通流布局。表头浅蓝底色、5列等宽（`flex:1`）、员工金额蓝紫色、合计行红色加粗大字，完全对齐参考设计。
 - **刷新页面保持登录状态（2026-03-25）**：新增登录状态管理功能，登录成功后保存会话到 localStorage，页面加载时自动检查并恢复登录状态。支持管理员和员工两种角色，会话有效期8小时。解决刷新页面跳回登录界面的问题。
 - **Server酱 微信推送（2026-04-02）**：员工登记产量后自动发送微信提醒。使用 `factory-backend/services/serverchan.js` 推送服务、`settings` 数据表存储 SendKey、后端 API `/api/companies/:company/settings/serverchan`、前端「系统设置」页面。管理员需先在 sct.ftqq.com 注册获取 SendKey 并配置。
+- **库存模块字段一致性修复（2026-04-15）**：修复数据库字段不一致导致的错误 `table stock_logs has no column named quantity`。问题根源：`stock_items` 表使用 `company` 字段，而代码使用 `company_code`；`stock_logs` 表缺少 `quantity` 列。解决方案：1) 更新 `stock.js` 路由，统一使用 `company_code` 字段名；2) 修改 `initDb.js`，在创建表前先删除旧表，确保表结构与代码一致；3) 重新初始化数据库（数据会丢失）。修复后，新增配件、入库、出库功能均正常工作，单位统一为 "pcs"，分类字段已移除。
 
 ## 项目：个人博客网站（SQLite + Node.js 后端）
 

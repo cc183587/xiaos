@@ -492,75 +492,49 @@
   .del-btn:hover{background:#e0352b}
   .empty-value{color:#8A93A1}
 
-  /* 查询记录卡片样式 - 移动端适配 */
-  .salary-detail-card{width:100%;min-width:unset;background:#F8F9FA;border-radius:8px;padding:16px;margin:10px 0;border:1px solid #E9ECEF;box-shadow:0 2px 8px rgba(0,0,0,.1);box-sizing:border-box}
-  .detail-header{display:flex;align-items:center;font-size:12px;font-weight:600;color:#212529;padding:8px 0;background:#E0E7FF;border-radius:6px;margin-bottom:10px;border:1px solid #C7D2FE}
-  .detail-header > div{text-align:center;padding:0 2px}
-  .header-id{display:none}
-  .header-name{min-width:40px;flex:0 0 40px}
-  .header-product{min-width:50px;flex:1;max-width:80px}
-  .header-process{min-width:40px;flex:0 0 40px}
-  .header-quantity{min-width:36px;flex:0 0 36px}
-  .header-price{min-width:36px;flex:0 0 36px}
-  .header-amount{min-width:44px;flex:0 0 44px}
-  .header-date{min-width:44px;flex:0 0 44px}
-  .header-op{min-width:70px;flex:0 0 70px}
-  /* 电脑端适配 */
-  @media (min-width: 768px) {
-    .header-name{flex:1 1 12%;min-width:50px}
-    .header-product{flex:1 1 15%;min-width:60px;max-width:none}
-    .header-process{flex:1 1 12%;min-width:50px}
-    .header-quantity{flex:0 0 10%;min-width:50px}
-    .header-price{flex:0 0 10%;min-width:45px}
-    .header-amount{flex:0 0 12%;min-width:55px}
-    .header-date{flex:0 0 10%;min-width:50px}
-    .header-op{flex:0 0 80px;min-width:80px}
-  }
-  .detail-header{position:static;margin-bottom:10px}
-  .detail-item{display:flex;align-items:center;font-size:12px;padding:6px 0;border-bottom:1px dashed #E0E6ED}
-  .detail-item > div{text-align:center;padding:0 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .detail-id{display:none}
-  .detail-name{min-width:40px;flex:0 0 40px;color:#8A93A1}
-  .detail-product{min-width:50px;flex:1;max-width:80px;color:#495057}
-  .detail-process{min-width:40px;flex:0 0 40px;color:#8A93A1}
-  .detail-quantity{min-width:36px;flex:0 0 36px;color:#495057}
-  .detail-price{min-width:36px;flex:0 0 36px;color:#495057}
-  .detail-amount{min-width:44px;flex:0 0 44px;color:#4F46E5;font-weight:500}
-  .detail-date{min-width:44px;flex:0 0 44px;color:#6C757D}
-  .detail-op{min-width:70px;flex:0 0 70px;text-align:center;display:flex;gap:2px;justify-content:center}
-  /* 电脑端适配 */
-  @media (min-width: 768px) {
-    .detail-name{flex:1 1 12%;min-width:50px}
-    .detail-product{flex:1 1 15%;min-width:60px;max-width:none}
-    .detail-process{flex:1 1 12%;min-width:50px}
-    .detail-quantity{flex:0 0 10%;min-width:50px}
-    .detail-price{flex:0 0 10%;min-width:45px}
-    .detail-amount{flex:0 0 12%;min-width:55px}
-    .detail-date{flex:0 0 10%;min-width:50px}
-    .detail-op{flex:0 0 80px;min-width:80px}
-  }
-  .rec-edit-btn,.rec-del-btn{flex:0 0 28px;width:28px;height:28px;padding:0;border:none;border-radius:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+  /* 查询记录卡片样式 - 固定表头 */
+  .salary-detail-card{min-width:640px;max-width:900px;background:#F8F9FA;border-radius:8px;padding:20px;margin:10px 0;border:1px solid #E9ECEF;box-shadow:0 2px 8px rgba(0,0,0,.1);overflow-x:auto;position:relative;padding-top:50px}
+  .detail-header{display:flex;align-items:center;font-size:13px;font-weight:600;color:#212529;padding:10px 0;background:#E0E7FF;border-radius:6px;margin-bottom:12px;border:1px solid #C7D2FE}
+  .detail-header > div{text-align:center;padding:0 4px}
+  .header-id{min-width:50px;flex:0 0 50px}
+  .header-name{min-width:60px;flex:0 0 60px}
+  .header-product{min-width:60px;flex:1}
+  .header-process{min-width:60px;flex:1}
+  .header-quantity{min-width:50px;flex:0 0 50px}
+  .header-price{min-width:50px;flex:0 0 50px}
+  .header-amount{min-width:60px;flex:0 0 60px}
+  .header-date{min-width:90px;flex:0 0 90px}
+  .header-op{min-width:90px;flex:0 0 90px}
+  .detail-header{position:absolute;top:15px;left:20px;right:20px;z-index:1}
+  .detail-item{display:flex;align-items:center;font-size:13px;padding:8px 0;border-bottom:1px dashed #E0E6ED}
+  .detail-item > div{text-align:center;padding:0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .detail-id{min-width:50px;flex:0 0 50px;color:#495057}
+  .detail-name{min-width:60px;flex:0 0 60px;color:#8A93A1}
+  .detail-product{min-width:60px;flex:1;color:#495057}
+  .detail-process{min-width:60px;flex:1;color:#8A93A1}
+  .detail-quantity{min-width:50px;flex:0 0 50px;color:#495057}
+  .detail-price{min-width:50px;flex:0 0 50px;color:#495057}
+  .detail-amount{min-width:60px;flex:0 0 60px;color:#4F46E5;font-weight:500}
+  .detail-date{min-width:90px;flex:0 0 90px;color:#6C757D}
+  .detail-op{min-width:100px;flex:0 0 100px;text-align:center;display:flex;gap:4px;justify-content:center}
+  .rec-edit-btn,.rec-del-btn{flex:1;min-width:36px;max-width:42px}
   .detail-item:last-child{border-bottom:none}
-  .rec-edit-btn{background:#E0E7FF;color:#4F46E5}
-  .rec-del-btn{background:#ff3b30;color:#fff}
+  .rec-edit-btn{background:#E0E7FF;color:#4F46E5;border:none;border-radius:4px;padding:4px 8px;font-size:11px;cursor:pointer;margin:2px}
+  .rec-del-btn{background:#ff3b30;color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:11px;cursor:pointer;margin:2px}
 
   /* 薪资明细卡片样式 - 5列等宽布局 */
-  .salary-summary-card{min-width:360px;max-width:480px;background:#F8F9FA;border-radius:8px;padding:16px;margin:10px 0;border:1px solid #E9ECEF;box-shadow:0 2px 8px rgba(0,0,0,.1);overflow-x:auto}
-  /* 电脑端适配 - 宽度与薪资合计一致 */
-  @media (min-width: 768px) {
-    .salary-summary-card{width:100%;max-width:none;min-width:unset}
-  }
-  .salary-summary-card .sum-header{display:flex;align-items:center;font-size:13px;font-weight:600;color:#212529;padding:8px 0;background:#E0E7FF;border-radius:6px;margin-bottom:10px;border:1px solid #C7D2FE}
-  .salary-summary-card .sum-header > div{flex:1;min-width:60px;text-align:center;padding:0 2px}
-  .salary-summary-card .sum-item{display:flex;align-items:center;font-size:13px;padding:8px 0;border-bottom:1px dashed #E0E6ED}
+  .salary-summary-card{min-width:500px;max-width:600px;background:#F8F9FA;border-radius:8px;padding:20px;margin:10px 0;border:1px solid #E9ECEF;box-shadow:0 2px 8px rgba(0,0,0,.1);overflow-x:auto}
+  .salary-summary-card .sum-header{display:flex;align-items:center;font-size:13px;font-weight:600;color:#212529;padding:10px 0;background:#E0E7FF;border-radius:6px;margin-bottom:12px;border:1px solid #C7D2FE}
+  .salary-summary-card .sum-header > div{flex:1;min-width:80px;text-align:center;padding:0 4px}
+  .salary-summary-card .sum-item{display:flex;align-items:center;font-size:13px;padding:10px 0;border-bottom:1px dashed #E0E6ED}
   .salary-summary-card .sum-item:last-child{border-bottom:none}
-  .salary-summary-card .sum-item > div{flex:1;min-width:60px;text-align:center;padding:0 2px}
+  .salary-summary-card .sum-item > div{flex:1;min-width:80px;text-align:center;padding:0 4px}
   .sum-col-id{color:#495057}
   .sum-col-name{color:#8A93A1}
   .sum-col-name.has-value{color:#495057}
   .sum-col-amt{color:#4F46E5;font-weight:500}
-  .salary-summary-card .sum-footer{display:flex;align-items:center;font-size:13px;padding:8px 0;font-weight:600;border-top:2px solid #E0E7FF;margin-top:8px}
-  .salary-summary-card .sum-footer > div{flex:1;min-width:60px;text-align:center;padding:0 2px}
+  .salary-summary-card .sum-footer{display:flex;align-items:center;font-size:13px;padding:10px 0;font-weight:600;border-top:2px solid #E0E7FF;margin-top:8px}
+  .salary-summary-card .sum-footer > div{flex:1;min-width:80px;text-align:center;padding:0 4px}
   .sum-footer-id{color:#212529;font-weight:600}
   .sum-footer-amt{color:#DC2626;font-weight:700;font-size:16px}
 
@@ -1389,6 +1363,7 @@ async function adminLoadRecord(){
 
   let html = `<div class="salary-detail-card">
     <div class="detail-header">
+      <div class="header-id">工号</div>
       <div class="header-name">姓名</div>
       <div class="header-product">产品</div>
       <div class="header-process">工序</div>
@@ -1470,16 +1445,17 @@ async function adminLoadRecord(){
   // 渲染排序后的记录
   allRecords.forEach(rec => {
     html += `<div class="detail-item">
+      <div class="detail-id">${rec.empId}</div>
       <div class="detail-name">${rec.empName}</div>
       <div class="detail-product">${rec.prodName}</div>
       <div class="detail-process">${rec.procName}</div>
       <div class="detail-quantity">${rec.quantity}</div>
       <div class="detail-price">${rec.price}</div>
       <div class="detail-amount">${rec.amount.toFixed(2)}</div>
-      <div class="detail-date">${rec.date.substring(5)}</div>
+      <div class="detail-date">${rec.date}</div>
       <div class="detail-op">
-        <button class="rec-edit-btn" onclick="editRecord(${rec.id})" title="修改">✏️</button>
-        <button class="rec-del-btn" onclick="delRecord(${rec.id})" title="删除">🗑️</button>
+        <button class="rec-edit-btn" onclick="editRecord(${rec.id})">修改</button>
+        <button class="rec-del-btn" onclick="delRecord(${rec.id})">删除</button>
       </div>
     </div>`;
   });
